@@ -9,16 +9,19 @@ import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-pla
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './core/exceptions/filters/all-exceptions.filter';
 import { DomainHttpExceptionsFilter } from './core/exceptions/filters/domain-exceptions.filter';
-import { NotificationsModule } from './modules/notifications/notifications.module';
+// import { NotificationsModule } from './modules/notifications/notifications.module';
+// import { configModule } from 'test/dynamic-config.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/nest-blogger-platform'), // свой URL MongoDB
-    NotificationsModule,
-    TestingModule,
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI || 'mongodb://localhost/nest-blogger-platform',
+    ), // свой URL MongoDB
     UserAccountsModule,
+    TestingModule,
     BloggersPlatformModule,
     CoreModule,
+    // configModule,
   ],
   controllers: [AppController],
   //важен порядок регистрации! Первым сработает DomainHttpExceptionsFilter!

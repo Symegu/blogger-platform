@@ -5,13 +5,12 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '../application/auth.service';
 import { ApiBody } from '@nestjs/swagger';
-import { LocalAuthGuard } from 'src/modules/user-accounts/guards/local/local-auth.guard';
-import { ExtractUserFromRequest } from 'src/core/decorators/param/extract-user-from-request';
+import { LocalAuthGuard } from '../../../modules/user-accounts/guards/local/local-auth.guard';
+import { ExtractUserFromRequest } from '../../../core/decorators/param/extract-user-from-request';
 import { JwtAuthGuard } from '../guards/bearer/jwt-auth.guard';
 import { AuthQueryRepository } from '../infrastructure/query/auth.query-repository';
 import { UsersService } from '../application/users.service';
@@ -19,8 +18,8 @@ import { UserContextDto } from '../dto/create-user.dto';
 import { CreateUserInputDto } from './input-dto/users.input-dto';
 import { EmailService } from '../../notifications/application/email.service';
 import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
-import { EmailInputDto } from 'src/modules/notifications/dto/email.input-dto';
-import { PasswordChangeDto } from 'src/modules/notifications/dto/confirmation-info.dto';
+import { EmailInputDto } from '../../../modules/notifications/dto/email.input-dto';
+import { PasswordChangeDto } from '../../../modules/notifications/dto/confirmation-info.dto';
 
 @Controller('auth')
 export class AuthController {

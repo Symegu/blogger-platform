@@ -8,12 +8,13 @@ import { UsersQueryRepository } from './infrastructure/query/users.query-reposit
 import { CryptoService } from './application/crypto.service';
 import { AuthService } from './application/auth.service';
 import { AuthController } from './api/auth.controller';
-import { LocalStrategy } from 'src/modules/user-accounts/guards/local/local.strategy';
+import { LocalStrategy } from '../../modules/user-accounts/guards/local/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './guards/bearer/jwt.strategy';
 import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
 import { EmailService } from '../notifications/application/email.service';
 import { AuthRepository } from './infrastructure/auth.repository';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuthRepository } from './infrastructure/auth.repository';
       secret: 'access-token-secret', //TODO: move to env. will be in the following lessons
       signOptions: { expiresIn: '60m' }, // Время жизни токена
     }),
+    NotificationsModule,
   ],
   controllers: [UsersController, AuthController],
   providers: [

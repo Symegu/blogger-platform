@@ -1,5 +1,5 @@
 //dto для боди при создании юзера. Сюда могут быть добавлены декораторы swagger
-import { BaseQueryParams } from 'src/core/dto/base.query-params.input-dto';
+import { BaseQueryParams } from '../../../../../core/dto/base.query-params.input-dto';
 import { UpdateBlogDto } from '../../dto/create-blog.dto';
 
 export class CreateBlogInputDto {

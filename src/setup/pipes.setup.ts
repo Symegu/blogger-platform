@@ -7,8 +7,8 @@ import {
   DomainException,
   DomainExceptionCode,
   Extension,
-} from 'src/core/exceptions/domain-exception';
-import { ObjectIdValidationTransformationPipe } from 'src/core/pipes/objectid-validation.pipe';
+} from '../core/exceptions/domain-exception';
+import { ObjectIdValidationTransformationPipe } from '../core/pipes/objectid-validation.pipe';
 
 export const errorFormatter = (
   errors: ValidationError[],

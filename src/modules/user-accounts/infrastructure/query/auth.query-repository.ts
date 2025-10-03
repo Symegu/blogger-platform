@@ -4,9 +4,9 @@ import { User, UserModelType } from '../../domain/user.entity';
 import {
   DomainException,
   DomainExceptionCode,
-} from 'src/core/exceptions/domain-exception';
+} from '../../../../core/exceptions/domain-exception';
 import { InjectModel } from '@nestjs/mongoose';
-import { ConfirmationInfoDto } from 'src/modules/notifications/dto/confirmation-info.dto';
+import { ConfirmationInfoDto } from '../../../../modules/notifications/dto/confirmation-info.dto';
 
 @Injectable()
 export class AuthQueryRepository {

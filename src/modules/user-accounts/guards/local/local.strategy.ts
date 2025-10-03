@@ -4,9 +4,9 @@ import { Strategy } from 'passport-local';
 import {
   DomainException,
   DomainExceptionCode,
-} from 'src/core/exceptions/domain-exception';
-import { AuthService } from 'src/modules/user-accounts/application/auth.service';
-import { UserContextDto } from 'src/modules/user-accounts/dto/create-user.dto';
+} from '../../../../core/exceptions/domain-exception';
+import { AuthService } from '../../../../modules/user-accounts/application/auth.service';
+import { UserContextDto } from '../../../../modules/user-accounts/dto/create-user.dto';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {

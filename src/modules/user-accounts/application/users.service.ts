@@ -9,7 +9,7 @@ import {
   DomainException,
   DomainExceptionCode,
   Extension,
-} from 'src/core/exceptions/domain-exception';
+} from '../../../core/exceptions/domain-exception';
 import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
 
 @Injectable()
@@ -24,8 +24,6 @@ export class UsersService {
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<string> {
-    //TODO: move to brypt service
-
     const userByLogin = await this.usersQueryRepository.findByLogin(dto.login);
     if (userByLogin) {
       throw new DomainException({

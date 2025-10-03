@@ -2,11 +2,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UserViewDto } from '../../api/view-dto/users.view-dto';
 import { User, UserDocument, UserModelType } from '../../domain/user.entity';
 import { GetUsersQueryParams } from '../../api/input-dto/users.input-dto';
-import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
 import {
   DomainException,
   DomainExceptionCode,
-} from 'src/core/exceptions/domain-exception';
+} from '../../../../core/exceptions/domain-exception';
+import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 
 export class UsersQueryRepository {
   constructor(

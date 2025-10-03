@@ -4,11 +4,11 @@ import { User, UserModelType } from '../domain/user.entity';
 import {
   DomainException,
   DomainExceptionCode,
-} from 'src/core/exceptions/domain-exception';
+} from '../../../core/exceptions/domain-exception';
 import {
   ConfirmationInfoDto,
   RecoveryInfoDto,
-} from 'src/modules/notifications/dto/confirmation-info.dto';
+} from '../../../modules/notifications/dto/confirmation-info.dto';
 
 @Injectable()
 export class AuthRepository {

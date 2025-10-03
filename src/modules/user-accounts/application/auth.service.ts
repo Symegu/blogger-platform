@@ -9,7 +9,7 @@ import { UsersService } from './users.service';
 import {
   DomainException,
   DomainExceptionCode,
-} from 'src/core/exceptions/domain-exception';
+} from '../../../core/exceptions/domain-exception';
 
 @Injectable()
 export class AuthService {
