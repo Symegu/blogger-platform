@@ -1,9 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
-import {
-  DomainException,
-  DomainExceptionCode,
-} from '../../../../core/exceptions/domain-exception';
+
+import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain-exception';
 
 @Injectable()
 export class BasicAuthGuard implements CanActivate {
@@ -20,9 +18,7 @@ export class BasicAuthGuard implements CanActivate {
 
     // "Basic base64(username:password)"
     const base64Credentials = authHeader.split(' ')[1];
-    const credentials = Buffer.from(base64Credentials, 'base64').toString(
-      'utf-8',
-    );
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
     const [username, password] = credentials.split(':');
 
     // сравнение с .env (или дефолтное admin:qwerty)

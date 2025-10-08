@@ -7,20 +7,20 @@ import {
   HttpStatus,
   Param,
   Post,
-  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
-import { UsersService } from '../application/users.service';
-import { UserViewDto } from './view-dto/users.view-dto';
-import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
-import {
-  GetUsersQueryParams,
-  CreateUserInputDto,
-  UpdateUserInputDto,
-} from './input-dto/users.input-dto';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBasicAuth, ApiParam } from '@nestjs/swagger';
+import { Types } from 'mongoose';
+import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
+
+import { GetUsersQueryParams, CreateUserInputDto } from './input-dto/users.input-dto';
+import { UserViewDto } from './view-dto/users.view-dto';
+import { GetAllUsersQuery } from '../application/queries/get-all-users.query';
+import { GetUserByIdQuery } from '../application/queries/get-user-by-id.query';
+import { CreateUserCommand } from '../application/usecases/create-user.usecase';
+import { DeleteUserCommand } from '../application/usecases/delete-user.usecase';
 import { BasicAuthGuard } from '../guards/basic/basic-auth.guard';
 
 @Controller('users')
@@ -28,48 +28,45 @@ import { BasicAuthGuard } from '../guards/basic/basic-auth.guard';
 @ApiBasicAuth('basicAuth')
 export class UsersController {
   constructor(
-    private usersQueryRepository: UsersQueryRepository,
-    private usersService: UsersService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {
     console.log('Users controller created');
   }
 
-  @ApiParam({ name: 'id' }) //для сваггера
-  @Get(':id')
-  async getById(@Param('id') id: string) {
-    // можем и чаще так и делаем возвращать Promise из action. Сам NestJS будет дожидаться, когда
-    // промис зарезолвится и затем NestJS вернёт результат клиенту
-    return this.usersQueryRepository.getByIdOrNotFoundFail(id);
-  }
+  // @ApiParam({ name: 'id' }) //для сваггера
+  // @Get(':id')
+  // async getById(@Param('id') id: Types.ObjectId): Promise<UserViewDto> {
+  //   return this.queryBus.execute(new GetUserByIdQuery(id));
+  // }
 
   @Get()
-  async getAll(
-    @Query() query: GetUsersQueryParams,
-  ): Promise<PaginatedViewDto<UserViewDto[]>> {
-    return this.usersQueryRepository.getAll(query);
+  async getAll(@Query() query: GetUsersQueryParams): Promise<PaginatedViewDto<UserViewDto[]>> {
+    return this.queryBus.execute(new GetAllUsersQuery(query));
   }
 
   @Post()
   async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
-    const userId = await this.usersService.createUser(body);
-
-    return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
-  }
-
-  @Put(':id')
-  async updateUser(
-    @Param('id') id: string,
-    @Body() body: UpdateUserInputDto,
-  ): Promise<UserViewDto> {
-    const userId = await this.usersService.updateUser(id, body);
-
-    return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
+    const userId = await this.commandBus.execute<CreateUserCommand, Types.ObjectId>(
+      new CreateUserCommand(body),
+    );
+    return this.queryBus.execute(new GetUserByIdQuery(userId));
   }
 
   @ApiParam({ name: 'id' }) //для сваггера
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteUser(@Param('id') id: string): Promise<void> {
-    return await this.usersService.deleteUser(id);
+  async deleteUser(@Param('id') id: Types.ObjectId): Promise<void> {
+    return await this.commandBus.execute<DeleteUserCommand, void>(new DeleteUserCommand(id));
   }
+
+  //  @Put(':id')
+  // async updateUser(
+  //   @Param('id') id: Types.ObjectId,
+  //   @Body() body: UpdateUserInputDto,
+  // ): Promise<UserViewDto> {
+  //   const userId = await this.usersService.updateUser(id, body);
+
+  //   return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
+  // }
 }

@@ -1,11 +1,12 @@
 import { IsString, IsNotEmpty, IsEmail } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateUserDomainDto {
   login: string;
   email: string;
   passwordHash: string;
-  confirmationCode: string;
-  confirmationCodeExpiration: Date;
+  confirmationCode?: string;
+  confirmationCodeExpiration?: Date;
 }
 
 export class CreateUserDto {
@@ -26,7 +27,7 @@ export class UpdateUserDto {
 }
 
 export class UserContextDto {
-  id: string;
+  id: Types.ObjectId;
   login: string;
   email: string;
 }

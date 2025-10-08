@@ -1,8 +1,5 @@
-import {
-  INestApplication,
-  ValidationError,
-  ValidationPipe,
-} from '@nestjs/common';
+import { INestApplication, ValidationError, ValidationPipe } from '@nestjs/common';
+
 import {
   DomainException,
   DomainExceptionCode,
@@ -10,10 +7,7 @@ import {
 } from '../core/exceptions/domain-exception';
 import { ObjectIdValidationTransformationPipe } from '../core/pipes/objectid-validation.pipe';
 
-export const errorFormatter = (
-  errors: ValidationError[],
-  errorMessage?: any,
-): Extension[] => {
+export const errorFormatter = (errors: ValidationError[], errorMessage?: any): Extension[] => {
   const errorsForResponse = errorMessage || [];
 
   for (const error of errors) {
@@ -49,7 +43,7 @@ export function pipesSetup(app: INestApplication) {
       //TODO: почему whitelist ломает логику вывода погинации? {"totalCount": 1,"pagesCount": null, "items": []}
       // whitelist: true,
       stopAtFirstError: true,
-      exceptionFactory: (errors) => {
+      exceptionFactory: errors => {
         const formattedErrors = errorFormatter(errors);
 
         throw new DomainException({

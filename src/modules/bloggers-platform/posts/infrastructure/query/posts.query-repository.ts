@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostModelType } from '../../domain/posts.entity';
-import { PostViewDto } from '../../api/view-dto/posts.view-dto';
-import { GetPostsQueryParams } from '../../api/input-dto/posts.input-dto';
+import { Types } from 'mongoose';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
+import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
+
+import { GetPostsQueryParams } from '../../api/input-dto/posts.input-dto';
+import { PostViewDto } from '../../api/view-dto/posts.view-dto';
+import { Post, PostModelType } from '../../domain/posts.entity';
 
 @Injectable()
 export class PostsQueryRepository {
@@ -12,14 +15,17 @@ export class PostsQueryRepository {
     private PostModel: PostModelType,
   ) {}
 
-  async getByIdOrNotFoundFail(id: string): Promise<PostViewDto> {
+  async getByIdOrNotFoundFail(id: Types.ObjectId): Promise<PostViewDto> {
     const post = await this.PostModel.findOne({
       _id: id,
       deletedAt: null,
     });
 
     if (!post) {
-      throw new NotFoundException('post not found');
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'Post not found',
+      });
     }
 
     return PostViewDto.mapToView(post);
@@ -27,7 +33,7 @@ export class PostsQueryRepository {
 
   async getAll(
     query: GetPostsQueryParams,
-    blogId?: string,
+    blogId?: Types.ObjectId,
   ): Promise<PaginatedViewDto<PostViewDto[]>> {
     // фильтр
     const filter: any = {};
@@ -51,7 +57,7 @@ export class PostsQueryRepository {
       pagesCount: Math.ceil(totalCount / query.pageSize),
       page: query.pageNumber,
       pageSize: query.pageSize,
-      items: result.map((p) => PostViewDto.mapToView(p)),
+      items: result.map(p => PostViewDto.mapToView(p)),
     };
   }
 }

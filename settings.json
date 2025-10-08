@@ -1,0 +1,26 @@
+{
+  // Использовать ESLint как основной форматтер
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Автоформатирование при сохранении
+  "editor.formatOnSave": true,
+
+  // ESLint будет автоматически фиксить ошибки при сохранении
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.fixAll.eslint": true
+  },
+
+  // Prettier + ESLint совместимость
+  "prettier.enable": true,
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all",
+
+  // Чтобы VS Code игнорировал node_modules при форматировании
+  "files.exclude": {
+    "**/node_modules": true
+  },
+
+  // Использовать путь к локальному ESLint в проекте
+  "eslint.nodePath": "./node_modules"
+}

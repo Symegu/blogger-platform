@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Error, HydratedDocument, Model } from 'mongoose';
+import { Error, HydratedDocument, Model, Types } from 'mongoose';
+
 import { CreatePostDomainDto, UpdatePostDto } from '../dto/create-post.dto';
 
 @Schema({ timestamps: true })
@@ -14,7 +15,7 @@ export class Post {
   content: string;
 
   @Prop({ type: String, required: true })
-  blogId: string;
+  blogId: Types.ObjectId;
 
   @Prop({ type: String, required: true })
   blogName: string;

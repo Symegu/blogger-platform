@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserModelType } from '../domain/user.entity';
-import {
-  DomainException,
-  DomainExceptionCode,
-} from '../../../core/exceptions/domain-exception';
+
+import { DomainException, DomainExceptionCode } from '../../../core/exceptions/domain-exception';
 import {
   ConfirmationInfoDto,
   RecoveryInfoDto,
 } from '../../../modules/notifications/dto/confirmation-info.dto';
+import { User, UserModelType } from '../domain/user.entity';
 
 @Injectable()
 export class AuthRepository {
@@ -36,9 +34,7 @@ export class AuthRepository {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
         message: 'Code expired',
-        errorsMessages: [
-          { message: 'Code expired', field: 'confirmationCodeExpiration' },
-        ],
+        errorsMessages: [{ message: 'Code expired', field: 'confirmationCodeExpiration' }],
       });
     }
 
@@ -99,10 +95,7 @@ export class AuthRepository {
       });
     }
 
-    user.setUserPasswordRecovery(
-      recoveryInfo.recoveryCode,
-      recoveryInfo.recoveryCodeExpiration,
-    );
+    user.setUserPasswordRecovery(recoveryInfo.recoveryCode, recoveryInfo.recoveryCodeExpiration);
     await user.save();
     return user;
   }

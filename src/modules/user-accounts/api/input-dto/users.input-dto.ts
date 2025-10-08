@@ -1,11 +1,6 @@
 //dto для боди при создании юзера. Сюда могут быть добавлены декораторы swagger
-import {
-  IsString,
-  IsNotEmpty,
-  IsEmail,
-  MinLength,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail, MinLength, MaxLength } from 'class-validator';
+
 import { BaseQueryParams } from '../../../../core/dto/base.query-params.input-dto';
 import { UpdateUserDto } from '../../dto/create-user.dto';
 

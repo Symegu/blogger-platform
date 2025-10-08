@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { CreateBlogDomainDto, UpdateBlogDto } from '../dto/create-blog.dto';
 import { Error, HydratedDocument, Model } from 'mongoose';
+
+import { CreateBlogDomainDto, UpdateBlogInputDto } from '../dto/create-blog.dto';
 
 @Schema({ timestamps: true })
 export class Blog {
@@ -45,7 +46,7 @@ export class Blog {
     this.deletedAt = new Date();
   }
 
-  update(dto: UpdateBlogDto) {
+  update(dto: UpdateBlogInputDto) {
     this.name = dto.name;
     this.description = dto.description;
     this.websiteUrl = dto.websiteUrl;

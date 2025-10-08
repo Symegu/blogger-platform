@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Blog, BlogModelType } from '../../domain/blogs.entity';
-import { BlogViewDto } from '../../api/view-dto/blogs.view-dto';
-import { GetBlogsQueryParams } from '../../api/input-dto/blogs.input-dto';
+import { Types } from 'mongoose';
 import { PaginatedViewDto } from 'src/core/dto/base.paginated.view-dto';
+import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
+
+import { GetBlogsQueryParams } from '../../api/input-dto/blogs.input-dto';
+import { BlogViewDto } from '../../api/view-dto/blogs.view-dto';
+import { Blog, BlogModelType } from '../../domain/blogs.entity';
 
 @Injectable()
 export class BlogsQueryRepository {
@@ -12,22 +15,23 @@ export class BlogsQueryRepository {
     private BlogModel: BlogModelType,
   ) {}
 
-  async getByIdOrNotFoundFail(id: string): Promise<BlogViewDto> {
+  async getByIdOrNotFoundFail(id: Types.ObjectId): Promise<BlogViewDto> {
     const blog = await this.BlogModel.findOne({
       _id: id,
       deletedAt: null,
     });
 
     if (!blog) {
-      throw new NotFoundException('blog not found');
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'Blog not found',
+      });
     }
 
     return BlogViewDto.mapToView(blog);
   }
-  async getAll(
-    query: GetBlogsQueryParams,
-  ): Promise<PaginatedViewDto<BlogViewDto[]>> {
-    let filter: any = {};
+  async getAll(query: GetBlogsQueryParams): Promise<PaginatedViewDto<BlogViewDto[]>> {
+    const filter: any = { deletedAt: null };
     if (query.searchNameTerm) {
       filter.name = { $regex: query.searchNameTerm, $options: 'i' };
     }
@@ -38,7 +42,6 @@ export class BlogsQueryRepository {
       .sort({ [sortField]: sortDirection })
       .skip((query.pageNumber - 1) * query.pageSize)
       .limit(query.pageSize)
-      .lean()
       .exec();
 
     return {
@@ -46,7 +49,7 @@ export class BlogsQueryRepository {
       pagesCount: Math.ceil(totalCount / query.pageSize),
       page: query.pageNumber,
       pageSize: query.pageSize,
-      items: result.map((blog) => BlogViewDto.mapToView(blog)),
+      items: result.map(blog => BlogViewDto.mapToView(blog)),
     };
   }
 }

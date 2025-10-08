@@ -1,20 +1,37 @@
 import { Module } from '@nestjs/common';
-import { UsersController } from './api/users.controller';
-import { UsersService } from './application/users.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './domain/user.entity';
-import { UsersRepository } from './infrastructure/users.repository';
-import { UsersQueryRepository } from './infrastructure/query/users.query-repository';
-import { CryptoService } from './application/crypto.service';
-import { AuthService } from './application/auth.service';
-import { AuthController } from './api/auth.controller';
-import { LocalStrategy } from '../../modules/user-accounts/guards/local/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './guards/bearer/jwt.strategy';
-import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
-import { EmailService } from '../notifications/application/email.service';
-import { AuthRepository } from './infrastructure/auth.repository';
+import { MongooseModule } from '@nestjs/mongoose';
+
+import { AuthController } from './api/auth.controller';
+import { UsersController } from './api/users.controller';
+import { AuthService } from './application/auth.service';
+import { CryptoService } from './application/crypto.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersFactory } from './application/factories/users.factory';
+import { GetUserByIdQueryHandler } from './application/queries/get-user-by-id.query';
+import { CreateUserUseCase } from './application/usecases/create-user.usecase';
+import { DeleteUserUseCase } from './application/usecases/delete-user.usecase';
+import { RegisterUserUseCase } from './application/usecases/register-user.usecase';
+import { UsersService } from './application/users.service';
+import { User, UserSchema } from './domain/user.entity';
+import { JwtStrategy } from './guards/bearer/jwt.strategy';
+import { AuthRepository } from './infrastructure/auth.repository';
+import { AuthQueryRepository } from './infrastructure/query/auth.query-repository';
+import { UsersQueryRepository } from './infrastructure/query/users.query-repository';
+import { UsersRepository } from './infrastructure/users.repository';
+import { LocalStrategy } from '../../modules/user-accounts/guards/local/local.strategy';
+import { EmailService } from '../notifications/application/email.service';
+import { GetAllUsersQueryHandler } from './application/queries/get-all-users.query';
+import { LoginUserUsecase } from './application/usecases/login-user.usecase';
+
+const commandHandlers = [
+  DeleteUserUseCase,
+  RegisterUserUseCase,
+  LoginUserUsecase,
+  CreateUserUseCase,
+];
+
+const queryHandlers = [GetUserByIdQueryHandler, GetAllUsersQueryHandler];
 
 @Module({
   imports: [
@@ -26,25 +43,29 @@ import { NotificationsModule } from '../notifications/notifications.module';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     JwtModule.register({
       secret: 'access-token-secret', //TODO: move to env. will be in the following lessons
-      signOptions: { expiresIn: '60m' }, // Время жизни токена
+      signOptions: { expiresIn: '5m' }, // Время жизни токена
     }),
     NotificationsModule,
   ],
   controllers: [UsersController, AuthController],
   providers: [
-    UsersService,
+    ...commandHandlers,
+    ...queryHandlers,
     UsersRepository,
+    UsersService,
+    EmailService,
+    AuthRepository,
+    AuthService,
     UsersQueryRepository,
     // SecurityDevicesQueryRepository,
     AuthQueryRepository,
-    AuthRepository,
-    AuthService,
-    EmailService,
     LocalStrategy,
     CryptoService,
+    // LoginUserUseCase,
     JwtStrategy,
     // UsersExternalQueryRepository,
     // UsersExternalService,
+    UsersFactory,
   ],
   exports: [JwtStrategy],
 })

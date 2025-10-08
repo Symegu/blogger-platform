@@ -4,9 +4,7 @@ import { Connection } from 'mongoose';
 
 @Controller('testing')
 export class TestingController {
-  constructor(
-    @InjectConnection() private readonly databaseConnection: Connection,
-  ) {
+  constructor(@InjectConnection() private readonly databaseConnection: Connection) {
     console.log('testing controller created');
   }
 
@@ -17,7 +15,7 @@ export class TestingController {
 
     const collections = await this.databaseConnection.listCollections();
 
-    const promises = collections.map((collection) =>
+    const promises = collections.map(collection =>
       this.databaseConnection.collection(collection.name).deleteMany({}),
     );
     await Promise.all(promises);

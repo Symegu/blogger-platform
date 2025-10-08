@@ -1,34 +1,27 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { AuthService } from '../application/auth.service';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Res } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody } from '@nestjs/swagger';
-import { LocalAuthGuard } from '../../../modules/user-accounts/guards/local/local-auth.guard';
+import { Response } from 'express';
+
 import { ExtractUserFromRequest } from '../../../core/decorators/param/extract-user-from-request';
-import { JwtAuthGuard } from '../guards/bearer/jwt-auth.guard';
-import { AuthQueryRepository } from '../infrastructure/query/auth.query-repository';
-import { UsersService } from '../application/users.service';
+import { PasswordChangeDto } from '../../../modules/notifications/dto/confirmation-info.dto';
+import { EmailInputDto } from '../../../modules/notifications/dto/email.input-dto';
+import { LocalAuthGuard } from '../../../modules/user-accounts/guards/local/local-auth.guard';
+import { EmailService } from '../../notifications/application/email.service';
+import { AuthService } from '../application/auth.service';
+import { RegisterUserCommand } from '../application/usecases/register-user.usecase';
 import { UserContextDto } from '../dto/create-user.dto';
 import { CreateUserInputDto } from './input-dto/users.input-dto';
-import { EmailService } from '../../notifications/application/email.service';
-import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
-import { EmailInputDto } from '../../../modules/notifications/dto/email.input-dto';
-import { PasswordChangeDto } from '../../../modules/notifications/dto/confirmation-info.dto';
+import { LoginUserCommand } from '../application/usecases/login-user.usecase';
+import { AuthQueryRepository } from '../infrastructure/query/auth.query-repository';
 
 @Controller('auth')
 export class AuthController {
   constructor(
+    private commandBus: CommandBus,
     private authService: AuthService,
-    private usersService: UsersService,
     private emailService: EmailService,
     private authQueryRepository: AuthQueryRepository,
-    private usersQueryRepository: UsersQueryRepository,
   ) {
     console.log('AuthController created');
   }
@@ -45,8 +38,17 @@ export class AuthController {
       },
     },
   })
-  async login(@ExtractUserFromRequest() user: UserContextDto) {
-    return this.authService.login(user.id);
+  async login(
+    @ExtractUserFromRequest() user: UserContextDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<string> {
+    const tokens = await this.commandBus.execute(new LoginUserCommand({ userId: user.id }));
+
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
+    return tokens.accessToken;
   }
 
   @Post('registration')
@@ -63,10 +65,7 @@ export class AuthController {
     },
   })
   async registration(@Body() body: CreateUserInputDto) {
-    const userId = await this.usersService.createUser(body);
-    const user = await this.authQueryRepository.getConfirmationInfo(userId);
-    this.emailService.sendConfirmationEmail(user.email, user.confirmationCode);
-    return;
+    return this.commandBus.execute(new RegisterUserCommand(body));
   }
 
   @Post('registration-confirmation')
@@ -107,13 +106,8 @@ export class AuthController {
     },
   })
   async emailConfirmationResending(@Body() dto: EmailInputDto) {
-    const updatedUser = await this.authService.changeEmailConfirmation(
-      dto.email,
-    );
-    this.emailService.sendConfirmationEmail(
-      updatedUser.email,
-      updatedUser.confirmationCode,
-    );
+    const updatedUser = await this.authService.changeEmailConfirmation(dto.email);
+    this.emailService.sendConfirmationEmail(updatedUser.email, updatedUser.confirmationCode);
     return;
   }
 
@@ -152,16 +146,14 @@ export class AuthController {
     },
   })
   async setNewPassword(@Body() dto: PasswordChangeDto) {
-    const user = await this.authQueryRepository.getUserByRecoveryCode(
-      dto.recoveryCode,
-    );
+    const user = await this.authQueryRepository.getUserByRecoveryCode(dto.recoveryCode);
     await this.authService.changeUserPassword(user.email, dto.newPassword);
     return;
   }
 
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
-  async me(@ExtractUserFromRequest() user: UserContextDto) {
-    return this.authQueryRepository.getMe(user.id);
-  }
+  // @Get('me')
+  // @UseGuards(JwtAuthGuard)
+  // async me(@ExtractUserFromRequest() user: UserContextDto) {
+  //   return this.authQueryRepository.getMe(user.id);
+  // }
 }

@@ -1,12 +1,10 @@
 import { InjectModel } from '@nestjs/mongoose';
+
+import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
+import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain-exception';
+import { GetUsersQueryParams } from '../../api/input-dto/users.input-dto';
 import { UserViewDto } from '../../api/view-dto/users.view-dto';
 import { User, UserDocument, UserModelType } from '../../domain/user.entity';
-import { GetUsersQueryParams } from '../../api/input-dto/users.input-dto';
-import {
-  DomainException,
-  DomainExceptionCode,
-} from '../../../../core/exceptions/domain-exception';
-import { PaginatedViewDto } from '../../../../core/dto/base.paginated.view-dto';
 
 export class UsersQueryRepository {
   constructor(
@@ -43,9 +41,7 @@ export class UsersQueryRepository {
     return UserViewDto.mapToView(user);
   }
 
-  async getAll(
-    query: GetUsersQueryParams,
-  ): Promise<PaginatedViewDto<UserViewDto[]>> {
+  async getAll(query: GetUsersQueryParams): Promise<PaginatedViewDto<UserViewDto[]>> {
     const filter: any = { deletedAt: null }; // добавляем фильтр на не удалённых
 
     // Если есть поисковые термы — используем $or
@@ -71,7 +67,6 @@ export class UsersQueryRepository {
       .sort({ [query.sortBy]: query.sortDirection === 'asc' ? 1 : -1 })
       .skip((query.pageNumber - 1) * query.pageSize)
       .limit(query.pageSize)
-      .lean()
       .exec();
 
     return {
@@ -79,7 +74,7 @@ export class UsersQueryRepository {
       pagesCount: Math.ceil(totalCount / query.pageSize),
       page: query.pageNumber,
       pageSize: query.pageSize,
-      items: result.map((user) => UserViewDto.mapToView(user)),
+      items: result.map(user => UserViewDto.mapToView(user)),
     };
   }
 }

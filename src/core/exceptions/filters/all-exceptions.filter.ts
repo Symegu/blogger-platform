@@ -1,11 +1,6 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpStatus,
-} from '@nestjs/common';
-
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
+
 import { ErrorResponseBody } from '../domain-exception';
 
 @Catch()
@@ -21,10 +16,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const responseBody = this.buildResponseBody(request.url, message);
     response.status(status).json(responseBody);
   }
-  private buildResponseBody(
-    requestUrl: string,
-    message: string,
-  ): ErrorResponseBody {
+  private buildResponseBody(requestUrl: string, message: string): ErrorResponseBody {
     //TODO: Replace with getter from configService. will be in the following lessons
     const isProduction = process.env.NODE_ENV === 'production';
 

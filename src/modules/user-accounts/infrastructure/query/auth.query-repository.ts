@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+
+import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain-exception';
+import { ConfirmationInfoDto } from '../../../../modules/notifications/dto/confirmation-info.dto';
 import { MeViewDto } from '../../api/view-dto/me.view-dto';
 import { User, UserModelType } from '../../domain/user.entity';
-import {
-  DomainException,
-  DomainExceptionCode,
-} from '../../../../core/exceptions/domain-exception';
-import { InjectModel } from '@nestjs/mongoose';
-import { ConfirmationInfoDto } from '../../../../modules/notifications/dto/confirmation-info.dto';
 
 @Injectable()
 export class AuthQueryRepository {

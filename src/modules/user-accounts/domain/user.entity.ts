@@ -1,11 +1,8 @@
-//флаг timestemp автоматичеки добавляет поля upatedAt и createdAt
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Model } from 'mongoose';
+
 import { CreateUserDomainDto, UpdateUserDto } from '../dto/create-user.dto';
-/**
- * Name of User Entity Schema
- */
+
 @Schema()
 export class Name {
   @Prop()
@@ -14,10 +11,7 @@ export class Name {
   lastName: string;
 }
 export const NameSchema = SchemaFactory.createForClass(Name);
-/**
- * User Entity Schema
- * This class represents the schema and behavior of a User entity.
- */
+
 @Schema({ timestamps: true })
 export class User {
   /**
@@ -25,7 +19,7 @@ export class User {
    * @type {string}
    * @required
    */
-  @Prop({ type: String, required: true }) //, unique: true
+  @Prop({ type: String, required: true, unique: true }) //
   login: string;
 
   /**
@@ -41,7 +35,7 @@ export class User {
    * @type {string}
    * @required
    */
-  @Prop({ type: String, required: true }) //, unique: true
+  @Prop({ type: String, required: true, unique: true }) //
   email: string;
 
   /**
@@ -52,10 +46,10 @@ export class User {
   @Prop({ type: Boolean, required: true, default: false })
   isEmailConfirmed: boolean;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, required: false })
   confirmationCode: string;
 
-  @Prop({ type: Date, required: true })
+  @Prop({ type: Date, required: false })
   confirmationCodeExpiration: Date;
 
   @Prop({ type: String, required: false, default: null })
@@ -88,9 +82,6 @@ export class User {
    * @returns {string} The string representation of the ID
    * если ипсльзуете по всей системе шв айди как string, можете юзать, если id
    */
-  // get id(): string {
-  //   return (this as unknown as { _id: Types.ObjectId })._id.toString();
-  // }
 
   // get id() {
   //   // @ts-ignore
@@ -102,13 +93,14 @@ export class User {
     user.email = dto.email;
     user.passwordHash = dto.passwordHash;
     user.login = dto.login;
-    user.isEmailConfirmed = false; // пользователь ВСЕГДА должен после регистрации подтверждить свой Email
-    user.confirmationCode = dto.confirmationCode;
-    user.confirmationCodeExpiration = dto.confirmationCodeExpiration;
+    //user.isEmailConfirmed = false; // пользователь ВСЕГДА должен после регистрации подтверждить свой Email
+    // user.confirmationCode = dto.confirmationCode ? dto.confirmationCode : null;
+    // user.confirmationCodeExpiration = dto.confirmationCodeExpiration || new Date(Date.now());
     user.name = {
       firstName: 'firstName xxx',
       lastName: 'lastName yyy',
     };
+    console.log('user', user);
 
     return user as UserDocument;
   }

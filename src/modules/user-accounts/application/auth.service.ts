@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { UsersRepository } from '../infrastructure/users.repository';
 import { JwtService } from '@nestjs/jwt';
+
 import { CryptoService } from './crypto.service';
+import { UsersService } from './users.service';
+import { DomainException, DomainExceptionCode } from '../../../core/exceptions/domain-exception';
 import { UserContextDto } from '../dto/create-user.dto';
 import { AuthRepository } from '../infrastructure/auth.repository';
 import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
-import { UsersService } from './users.service';
-import {
-  DomainException,
-  DomainExceptionCode,
-} from '../../../core/exceptions/domain-exception';
+import { UsersRepository } from '../infrastructure/users.repository';
 
 @Injectable()
 export class AuthService {
@@ -21,32 +19,26 @@ export class AuthService {
     private cryptoService: CryptoService,
     private usersService: UsersService,
   ) {}
-  async validateUser(
-    loginOrEmail: string,
-    password: string,
-  ): Promise<UserContextDto | null> {
+  async validateUser(loginOrEmail: string, password: string): Promise<UserContextDto | null> {
     const user = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
     if (!user) {
       return null;
     }
 
-    const validPassword = await this.cryptoService.comparePassword(
-      password,
-      user.passwordHash,
-    );
+    const validPassword = await this.cryptoService.comparePassword(password, user.passwordHash);
 
     if (!validPassword) {
       return null;
     }
-    return { id: user.id.toString(), login: user.login, email: user.email };
+    return { id: user.id, login: user.login, email: user.email };
   }
 
-  async login(userId: string): Promise<{ accessToken: string }> {
-    const accessToken = await this.jwtService.sign({
-      id: userId,
-    } as UserContextDto);
-    return { accessToken: accessToken };
-  }
+  // async login(userId: string): Promise<{ accessToken: string }> {
+  //   const accessToken = await this.jwtService.sign({
+  //     id: userId,
+  //   } as UserContextDto);
+  //   return { accessToken: accessToken };
+  // }
 
   async confirmUserEmail(email: string) {
     return await this.authRepository.confirmUserEmail(email);
@@ -65,14 +57,12 @@ export class AuthService {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
         message: 'Email already confirmed',
-        errorsMessages: [
-          { message: 'Email already confirmed', field: 'email' },
-        ],
+        errorsMessages: [{ message: 'Email already confirmed', field: 'email' }],
       });
     }
 
     const { confirmationCode, confirmationCodeExpiration } =
-      this.usersService.generateConfirmation();
+      this.cryptoService.generateConfirmation();
     return await this.authRepository.setUserConfirmation({
       email,
       confirmationCode,
@@ -97,7 +87,7 @@ export class AuthService {
       });
     }
     const { confirmationCode, confirmationCodeExpiration } =
-      this.usersService.generateConfirmation();
+      this.cryptoService.generateConfirmation();
     return await this.authRepository.setUserRecovery({
       email,
       recoveryCode: confirmationCode,
@@ -115,9 +105,6 @@ export class AuthService {
       });
     }
     const hashPassword = await this.cryptoService.createHash(newPassword);
-    return await this.authRepository.setNewUserPassword(
-      user.email,
-      hashPassword,
-    );
+    return await this.authRepository.setNewUserPassword(user.email, hashPassword);
   }
 }

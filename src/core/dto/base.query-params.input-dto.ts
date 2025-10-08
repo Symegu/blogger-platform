@@ -14,7 +14,7 @@ export class BaseQueryParams {
   @IsEnum(['asc', 'desc'])
   sortDirection: 'asc' | 'desc' = 'desc';
 
-  calculateSkip() {
+  calculateSkip?() {
     return (this.pageNumber - 1) * this.pageSize;
   }
 }

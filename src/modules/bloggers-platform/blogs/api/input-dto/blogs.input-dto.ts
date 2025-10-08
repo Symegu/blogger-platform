@@ -1,16 +1,25 @@
 //dto для боди при создании юзера. Сюда могут быть добавлены декораторы swagger
+import { IsNotEmpty, IsString, IsUrl, MaxLength } from 'class-validator';
+
+import { Trim } from '../../../../../core/decorators/transform/trim';
 import { BaseQueryParams } from '../../../../../core/dto/base.query-params.input-dto';
-import { UpdateBlogDto } from '../../dto/create-blog.dto';
 
 export class CreateBlogInputDto {
+  @Trim()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(15)
   name: string;
+  @Trim()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
   description: string;
-  websiteUrl: string;
-}
-
-export class UpdateBlogInputDto implements UpdateBlogDto {
-  name: string;
-  description: string;
+  @Trim()
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  @MaxLength(100)
   websiteUrl: string;
 }
 

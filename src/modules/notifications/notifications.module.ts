@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { EmailService } from './application/email.service';
 import { MailerModule } from '@nestjs-modules/mailer';
+
+import { EmailService } from './application/email.service';
 
 @Module({
   imports: [
@@ -11,8 +12,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         // ignoreTLS: true,
         secure: true,
         auth: {
-          user:
-            process.env.MAILDEV_INCOMING_USER || 'testingNodemailer@yandex.ru',
+          user: process.env.MAILDEV_INCOMING_USER || 'testingNodemailer@yandex.ru',
           pass: process.env.MAILDEV_INCOMING_PASS || 'ygvmkdjhlyiorspd',
         },
       },

@@ -1,16 +1,7 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  DomainException,
-  DomainExceptionCode,
-  ErrorResponseBody,
-} from '../domain-exception';
-
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
+
+import { DomainException, DomainExceptionCode, ErrorResponseBody } from '../domain-exception';
 
 //https://docs.nestjs.com/exception-filters#exception-filters-1
 //Ошибки класса DomainException (instanceof DomainException)
@@ -48,10 +39,7 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
     }
   }
 
-  private buildResponseBody(
-    exception: DomainException,
-    requestUrl: string,
-  ): ErrorResponseBody {
+  private buildResponseBody(exception: DomainException, requestUrl: string): ErrorResponseBody {
     return {
       // timestamp: new Date().toISOString(),
       // path: requestUrl,

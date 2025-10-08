@@ -1,33 +1,34 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostModelType } from '../domain/posts.entity';
-import { PostsRepository } from '../infrastructure/posts.repository';
-import { CreatePostDomainDto, UpdatePostDto } from '../dto/create-post.dto';
+// import { Injectable } from '@nestjs/common';
+// import { InjectModel } from '@nestjs/mongoose';
 
-@Injectable()
-export class PostsService {
-  constructor(
-    @InjectModel(Post.name)
-    private PostModel: PostModelType,
-    private postsRepository: PostsRepository,
-  ) {}
+// import { Post, PostModelType } from '../domain/posts.entity';
+// import { CreatePostDomainDto, UpdatePostDto } from '../dto/create-post.dto';
+// import { PostsRepository } from '../infrastructure/posts.repository';
 
-  async createPost(dto: CreatePostDomainDto): Promise<string> {
-    const post = this.PostModel.createInstance(dto);
-    await this.postsRepository.save(post);
-    return post._id.toString();
-  }
+// @Injectable()
+// export class PostsService {
+//   constructor(
+//     @InjectModel(Post.name)
+//     private PostModel: PostModelType,
+//     private postsRepository: PostsRepository,
+//   ) {}
 
-  async updatePost(id: string, dto: UpdatePostDto): Promise<string> {
-    const post = await this.postsRepository.findOrNotFoundFail(id);
-    post.update(dto);
-    await this.postsRepository.save(post);
-    return post._id.toString();
-  }
+//   async createPost(dto: CreatePostDomainDto): Promise<string> {
+//     const post = this.PostModel.createInstance(dto);
+//     await this.postsRepository.save(post);
+//     return post._id.toString();
+//   }
 
-  async deletePost(id: string) {
-    const post = await this.postsRepository.findOrNotFoundFail(id);
-    post.makeDeleted();
-    await this.postsRepository.save(post);
-  }
-}
+//   async updatePost(id: string, dto: UpdatePostDto): Promise<string> {
+//     const post = await this.postsRepository.findOrNotFoundFail(id);
+//     post.update(dto);
+//     await this.postsRepository.save(post);
+//     return post._id.toString();
+//   }
+
+//   async deletePost(id: string) {
+//     const post = await this.postsRepository.findOrNotFoundFail(id);
+//     post.makeDeleted();
+//     await this.postsRepository.save(post);
+//   }
+// }
