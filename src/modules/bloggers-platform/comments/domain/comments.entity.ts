@@ -20,6 +20,9 @@ export class CommentLikesInfo {
 
   @Prop({ type: Number, default: 0 })
   dislikesCount: number;
+
+  @Prop({ type: String, enum: ['None', 'Like', 'Dislike'], default: 'None' })
+  myStatus: 'None' | 'Like' | 'Dislike';
 }
 export const CommentLikesInfoSchema = SchemaFactory.createForClass(CommentLikesInfo);
 
@@ -55,6 +58,7 @@ export class Comment {
     comment.likesInfo = {
       likesCount: 0,
       dislikesCount: 0,
+      myStatus: 'None',
     };
 
     // comment.createdAt = new Date();

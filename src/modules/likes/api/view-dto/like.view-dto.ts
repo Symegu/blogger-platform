@@ -1,9 +1,7 @@
-import { LikeStatus } from '../input-dto/like.input-dto';
-
 export class LikesInfoViewDto {
   likesCount: number;
   dislikesCount: number;
-  myStatus: LikeStatus;
+  myStatus: 'None' | 'Like' | 'Dislike';
 }
 
 export class LikeDetailsViewDto {
@@ -15,6 +13,6 @@ export class LikeDetailsViewDto {
 export class ExtendedLikesInfoViewDto {
   likesCount: number;
   dislikesCount: number;
-  myStatus: LikeStatus;
+  myStatus: 'None' | 'Like' | 'Dislike';
   newestLikes: LikeDetailsViewDto[];
 }

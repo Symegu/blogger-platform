@@ -22,6 +22,7 @@ import { UpdateCommentInputDto } from './input-dto/comment.input-dto';
 import { GetCommentByIdQuery } from '../application/queries/get-comment-by-id.query';
 import { DeleteCommentCommand } from '../application/usecases/delete-comment.usecase';
 import { UpdateCommentCommand } from '../application/usecases/update-comment.usecase';
+import { JwtOptionalAuthGuard } from 'src/modules/user-accounts/guards/bearer/jwt-optional-auth.guard';
 
 @Controller('comments')
 export class CommentsController {
@@ -33,9 +34,9 @@ export class CommentsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtOptionalAuthGuard)
   async getById(@Param('id') id: Types.ObjectId, @ExtractUserFromRequest() user: UserContextDto) {
-    return this.queryBus.execute(new GetCommentByIdQuery(id, user?.id));
+    return this.queryBus.execute(new GetCommentByIdQuery(id, user));
   }
 
   @Put(':id')

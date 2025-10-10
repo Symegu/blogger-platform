@@ -5,37 +5,37 @@ import { LikesQueryRepository } from 'src/modules/likes/infrastructure/query/lik
 
 import { CommentViewDto } from '../../api/view-dto/comment.view-dto';
 import { CommentsQueryRepository } from '../../infrastructure/query/comments.query-repository';
+import { LikesService } from '../../../../likes/application/likes.service';
+import { UserContextDto } from 'src/modules/user-accounts/dto/create-user.dto';
+import { CommentsRepository } from '../../infrastructure/comments.repository';
 
 export class GetCommentByIdQuery {
   constructor(
     public readonly commentId: Types.ObjectId,
-    public readonly userId?: Types.ObjectId,
+    public readonly user: UserContextDto | null,
   ) {}
 }
 
 @QueryHandler(GetCommentByIdQuery)
 export class GetCommentByIdQueryHandler implements IQueryHandler<GetCommentByIdQuery> {
   constructor(
-    private commentsQueryRepository: CommentsQueryRepository,
-    private likesQueryRepository: LikesQueryRepository,
+    private commentsRepository: CommentsRepository,
+    private likesService: LikesService,
   ) {}
 
-  async execute({ commentId, userId }: GetCommentByIdQuery): Promise<CommentViewDto> {
-    const comment = await this.commentsQueryRepository.getByIdOrNotFoundFail(commentId);
-    console.log('comment', comment);
+  async execute({ commentId, user }: GetCommentByIdQuery): Promise<CommentViewDto> {
+    const comment = await this.commentsRepository.findOrNotFoundFail(commentId);
 
-    if (userId) {
-      const status = await this.likesQueryRepository.calculateMyStatus(
-        userId,
-        commentId,
-        LikeableEntity.Comment,
-      );
-      console.log('like status', status);
-
-      comment.likesInfo.myStatus = status;
-    }
-    console.log('comment with like status', comment);
-
-    return comment;
+    const likesInfo = await this.likesService.buildLikesInfo(
+      comment._id,
+      LikeableEntity.Comment,
+      user?.id,
+    );
+    comment.likesInfo = {
+      likesCount: likesInfo.likesCount,
+      dislikesCount: likesInfo.dislikesCount,
+      myStatus: likesInfo.myStatus,
+    };
+    return CommentViewDto.mapToView(comment);
   }
 }

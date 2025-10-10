@@ -28,14 +28,13 @@ export class SetLikeStatusUseCase implements ICommandHandler<SetLikeStatusComman
   ) {}
 
   async execute({ entityId, entityType, likeStatus, user }: SetLikeStatusCommand): Promise<void> {
-    // 1) Убедиться, что сущность существует (бросать 404, если нет)
-    // 1️⃣ Проверяем, что сущность существует
+    // Проверяем, что сущность существует
     const entity =
       entityType === LikeableEntity.Post
         ? await this.postsRepository.findOrNotFoundFail(entityId)
         : await this.commentsRepository.findOrNotFoundFail(entityId);
 
-    // 2️⃣ Проверяем, есть ли уже лайк от пользователя
+    // Проверяем, есть ли уже лайк от пользователя
     const existingLike = await this.likesRepository.findByUserAndEntity(
       user.id,
       entityId,
@@ -67,7 +66,7 @@ export class SetLikeStatusUseCase implements ICommandHandler<SetLikeStatusComman
       }
     }
 
-    // 3️⃣ Пересчитываем и обновляем счётчики
+    // Пересчитываем и обновляем счётчики
     await this.updateEntityLikeCounters(entityId, entityType);
   }
 
@@ -86,9 +85,25 @@ export class SetLikeStatusUseCase implements ICommandHandler<SetLikeStatusComman
       LikeStatus.Dislike,
     );
 
+    // newestLikes — только для постов (по спецификации)
+    let newestMapped: { addedAt: Date; userId: string; login: string }[] = [];
+
     if (entityType === LikeableEntity.Post) {
-      await this.postsRepository.updateLikeCounters(entityId, likesCount, dislikesCount);
+      const newest = await this.likesRepository.newestLikes(entityId, entityType, 3);
+      newestMapped = newest.map(l => ({
+        addedAt: l.createdAt,
+        userId: l.userId.toString(),
+        login: l.userLogin,
+      }));
+      // обновляем пост (likes + newest)
+      await this.postsRepository.updateLikeCountersAndNewest(
+        entityId,
+        likesCount,
+        dislikesCount,
+        newestMapped,
+      );
     } else {
+      // комментарии — обновляем только счётчики
       await this.commentsRepository.updateLikeCounters(entityId, likesCount, dislikesCount);
     }
   }

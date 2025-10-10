@@ -40,6 +40,7 @@ import { GetCommentByIdQueryHandler } from './comments/application/queries/get-c
 import { CommentsRepository } from './comments/infrastructure/comments.repository';
 import { CommentsQueryRepository } from './comments/infrastructure/query/comments.query-repository';
 import { LikesQueryRepository } from '../likes/infrastructure/query/likes.query-repository';
+import { LikesService } from '../likes/application/likes.service';
 
 const commandHandlers = [
   CreateBlogUseCase,
@@ -83,6 +84,7 @@ const queryHandlers = [
     PostsQueryRepository,
     CommentsRepository,
     CommentsQueryRepository,
+    LikesService,
     LikesRepository,
     LikesQueryRepository,
     BlogsFactory,

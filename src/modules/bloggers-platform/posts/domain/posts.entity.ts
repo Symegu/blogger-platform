@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Error, HydratedDocument, Model, Types } from 'mongoose';
 
 import { CreatePostDomainDto, UpdatePostDto } from '../dto/create-post.dto';
+import { LikeStatus } from 'src/modules/likes/domain/like.entity';
 
 @Schema({ timestamps: true })
 export class Post {
@@ -14,7 +15,7 @@ export class Post {
   @Prop({ type: String, required: true })
   content: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: Types.ObjectId, required: true })
   blogId: Types.ObjectId;
 
   @Prop({ type: String, required: true })
@@ -38,13 +39,13 @@ export class Post {
   extendedLikesInfo: {
     likesCount: number;
     dislikesCount: number;
-    myStatus: 'None' | 'Like' | 'Dislike';
+    myStatus: LikeStatus.None | LikeStatus.Like | LikeStatus.Dislike;
     newestLikes: any[];
   };
 
   // Для тестов: myStatus = 'None' | 'Like' | 'Dislike', вычисляемый динамически
   // Мы сделаем его виртуальным
-  myStatus?: 'None' | 'Like' | 'Dislike';
+  myStatus?: LikeStatus.None | LikeStatus.Like | LikeStatus.Dislike;
   // get id() {
   //   // @ts-ignore
   //   return this._id.toString();
@@ -60,7 +61,7 @@ export class Post {
     post.extendedLikesInfo = {
       likesCount: 0,
       dislikesCount: 0,
-      myStatus: 'None',
+      myStatus: LikeStatus.None,
       newestLikes: [],
     };
     return post as PostDocument;

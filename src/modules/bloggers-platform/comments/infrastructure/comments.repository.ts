@@ -37,7 +37,7 @@ export class CommentsRepository {
     dislikesCount: number,
   ): Promise<void> {
     await this.CommentModel.updateOne(
-      { _id: commentId },
+      { _id: commentId, deletedAt: null },
       {
         $set: {
           'likesInfo.likesCount': likesCount,

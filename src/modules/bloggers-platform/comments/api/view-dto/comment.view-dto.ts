@@ -28,7 +28,7 @@ export class CommentViewDto {
     dto.likesInfo = {
       likesCount: comment.likesInfo?.likesCount ?? 0,
       dislikesCount: comment.likesInfo?.dislikesCount ?? 0,
-      myStatus: LikeStatus.None,
+      myStatus: comment.likesInfo?.myStatus ?? 'None',
     };
 
     return dto;

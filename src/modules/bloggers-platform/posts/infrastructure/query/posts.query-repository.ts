@@ -37,12 +37,8 @@ export class PostsQueryRepository {
   ): Promise<PaginatedViewDto<PostViewDto[]>> {
     // фильтр
     const filter: any = {};
-    // if (query.searchTitleTerm) {
-    //   filter.title = { $regex: query.searchTitleTerm, $options: 'i' };
-    // }
-
     if (blogId) {
-      filter.blogId = { $regex: blogId };
+      filter.blogId = { blogId, deletedAt: null };
     }
 
     const totalCount = await this.PostModel.countDocuments(filter);

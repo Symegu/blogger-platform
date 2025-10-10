@@ -19,13 +19,8 @@ export class UpdateCommentCommand {
 export class UpdateCommentUseCase implements ICommandHandler<UpdateCommentCommand, void> {
   constructor(private commentsRepository: CommentsRepository) {}
   async execute({ commentId, dto, user }: UpdateCommentCommand): Promise<void> {
-    console.log('UpdateCommentUseCase', commentId, dto, user);
-
     const comment = await this.ensureCommentExists(commentId);
-    console.log('found comment', comment);
-
     await this.ensureSameUser(comment.commentatorInfo.userId, user.id);
-    console.log('User is allowed to change this comment');
 
     comment.update(dto);
     await this.commentsRepository.save(comment);
