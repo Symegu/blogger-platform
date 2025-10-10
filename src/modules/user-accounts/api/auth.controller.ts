@@ -41,14 +41,16 @@ export class AuthController {
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<string> {
-    const tokens = await this.commandBus.execute(new LoginUserCommand({ userId: user.id }));
+  ): Promise<{ accessToken: string }> {
+    const tokens = await this.commandBus.execute(
+      new LoginUserCommand({ userId: user.id, login: user.login }),
+    );
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: true,
     });
-    return tokens.accessToken;
+    return { accessToken: tokens.accessToken };
   }
 
   @Post('registration')

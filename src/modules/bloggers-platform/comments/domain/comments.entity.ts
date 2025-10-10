@@ -28,13 +28,13 @@ export class Comment {
   @Prop({ type: String, required: true, minlength: 20, maxlength: 300 })
   content: string;
 
-  @Prop({ type: CommentatorInfo, required: true })
+  @Prop({ type: CommentatorInfoSchema, required: true })
   commentatorInfo: CommentatorInfo;
 
   @Prop({ type: Types.ObjectId, required: true })
   postId: Types.ObjectId;
 
-  @Prop({ type: CommentLikesInfo, default: () => ({}) })
+  @Prop({ type: CommentLikesInfoSchema, default: () => ({}) })
   likesInfo: CommentLikesInfo;
 
   createdAt: Date;
@@ -48,18 +48,31 @@ export class Comment {
     const comment = new this();
     comment.content = dto.content;
     comment.commentatorInfo = {
-      userId: dto.commentatorInfo.userId,
-      userLogin: dto.commentatorInfo.userLogin,
+      userId: dto.userId,
+      userLogin: dto.userLogin,
     };
     comment.postId = dto.postId;
     comment.likesInfo = {
       likesCount: 0,
       dislikesCount: 0,
     };
-    comment.createdAt = new Date();
-    comment.updatedAt = new Date();
+
+    // comment.createdAt = new Date();
+    // comment.updatedAt = new Date();
 
     return comment as CommentDocument;
+  }
+
+  update(dto: { content: string }) {
+    this.content = dto.content;
+    this.updatedAt = new Date();
+  }
+
+  makeDeleted() {
+    if (this.deletedAt !== null) {
+      throw new Error('Entity already deleted');
+    }
+    this.deletedAt = new Date();
   }
 }
 

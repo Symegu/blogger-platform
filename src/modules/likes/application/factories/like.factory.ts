@@ -23,7 +23,7 @@ export class LikesFactory {
     return like;
   }
 
-  createForPost(
+  async createForPost(
     userId: Types.ObjectId,
     userLogin: string,
     postId: Types.ObjectId,
@@ -38,7 +38,7 @@ export class LikesFactory {
     });
   }
 
-  createForComment(
+  async createForComment(
     userId: Types.ObjectId,
     userLogin: string,
     commentId: Types.ObjectId,

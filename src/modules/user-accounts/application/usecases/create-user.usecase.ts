@@ -28,7 +28,17 @@ export class CreateUserUseCase implements ICommandHandler<CreateUserCommand, Typ
   ) {}
 
   async execute({ dto }: CreateUserCommand): Promise<Types.ObjectId> {
-    const uniqueEmail = await this.usersQueryRepository.findByEmail(dto.email);
+    await this.ensureUserUniqueness(dto.email, dto.login);
+    const user = await this.usersFactory.create(dto);
+
+    user.isEmailConfirmed = true;
+    await this.usersRepository.save(user);
+
+    return user._id;
+  }
+
+  private async ensureUserUniqueness(email: string, login: string) {
+    const uniqueEmail = await this.usersQueryRepository.findByEmail(email);
     if (uniqueEmail) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
@@ -37,7 +47,7 @@ export class CreateUserUseCase implements ICommandHandler<CreateUserCommand, Typ
       });
     }
 
-    const uniqueLogin = await this.usersQueryRepository.findByEmail(dto.login);
+    const uniqueLogin = await this.usersQueryRepository.findByEmail(login);
     if (uniqueLogin) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
@@ -45,11 +55,5 @@ export class CreateUserUseCase implements ICommandHandler<CreateUserCommand, Typ
         errorsMessages: [new Extension('Email already exists', 'email')],
       });
     }
-    const user = await this.usersFactory.create(dto);
-
-    user.isEmailConfirmed = true;
-    await this.usersRepository.save(user);
-
-    return user._id;
   }
 }

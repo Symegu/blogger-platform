@@ -30,4 +30,20 @@ export class PostsRepository {
 
     return post;
   }
+
+  async updateLikeCounters(
+    postId: Types.ObjectId,
+    likesCount: number,
+    dislikesCount: number,
+  ): Promise<void> {
+    await this.PostModel.updateOne(
+      { _id: postId },
+      {
+        $set: {
+          'likesInfo.likesCount': likesCount,
+          'likesInfo.dislikesCount': dislikesCount,
+        },
+      },
+    );
+  }
 }

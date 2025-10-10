@@ -19,6 +19,9 @@ export class Like {
   @Prop({ type: Types.ObjectId, required: true })
   userId: Types.ObjectId;
 
+  @Prop({ type: String, required: true })
+  userLogin: string;
+
   @Prop({
     type: String,
     required: true,
@@ -44,19 +47,19 @@ export class Like {
   static createInstance(dto: CreateLikeDomainDto): LikeDocument {
     const like = new this();
     like.userId = dto.userId;
+    like.userLogin = dto.userLogin;
     like.entity = dto.entity;
     like.entityId = dto.entityId;
     like.status = dto.status;
-    like.createdAt = new Date();
-    like.updatedAt = new Date();
 
     return like as LikeDocument;
   }
 
   // Метод для обновления статуса
-  updateStatus(newStatus: LikeStatus): void {
+  updateStatus(newStatus: LikeStatus): this {
     this.status = newStatus;
     this.updatedAt = new Date();
+    return this;
   }
 }
 

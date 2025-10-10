@@ -1,13 +1,16 @@
 import { LikesInfoViewDto } from 'src/modules/likes/api/view-dto/like.view-dto';
 import { LikeStatus } from 'src/modules/likes/domain/like.entity';
 
-import { CommentatorInfo, CommentDocument } from '../../domain/comments.entity';
-
+import { CommentDocument } from '../../domain/comments.entity';
+export class CommentatorInfoDto {
+  userId: string;
+  userLogin: string;
+}
 export class CommentViewDto {
   id: string;
   content: string;
-  commentatorInfo: CommentatorInfo;
-  createdAt: string;
+  commentatorInfo: CommentatorInfoDto;
+  createdAt: Date;
   likesInfo: LikesInfoViewDto;
 
   static mapToView(comment: CommentDocument): CommentViewDto {
@@ -15,13 +18,19 @@ export class CommentViewDto {
 
     dto.id = comment._id.toString();
     dto.content = comment.content;
-    dto.commentatorInfo = comment.commentatorInfo;
-    dto.createdAt = comment.createdAt.toISOString();
-    dto.likesInfo = new LikesInfoViewDto(
-      comment.likesInfo.likesCount,
-      comment.likesInfo.dislikesCount,
-      LikeStatus.None, // ← временно, пока не реализована логика определения myStatus
-    );
+    dto.commentatorInfo = {
+      userId: comment.commentatorInfo.userId.toString(),
+      userLogin: comment.commentatorInfo.userLogin,
+    };
+    dto.createdAt = comment.createdAt;
+
+    // Если likesInfo передан — используем; иначе дефолт
+    dto.likesInfo = {
+      likesCount: comment.likesInfo?.likesCount ?? 0,
+      dislikesCount: comment.likesInfo?.dislikesCount ?? 0,
+      myStatus: LikeStatus.None,
+    };
+
     return dto;
   }
 }
