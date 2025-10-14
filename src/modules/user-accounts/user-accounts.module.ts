@@ -23,6 +23,7 @@ import { LocalStrategy } from '../../modules/user-accounts/guards/local/local.st
 import { EmailService } from '../notifications/application/email.service';
 import { GetAllUsersQueryHandler } from './application/queries/get-all-users.query';
 import { LoginUserUsecase } from './application/usecases/login-user.usecase';
+import { UsersConfig } from './users.config';
 
 const commandHandlers = [
   DeleteUserUseCase,
@@ -66,7 +67,8 @@ const queryHandlers = [GetUserByIdQueryHandler, GetAllUsersQueryHandler];
     // UsersExternalQueryRepository,
     // UsersExternalService,
     UsersFactory,
+    UsersConfig,
   ],
-  exports: [JwtStrategy],
+  exports: [JwtStrategy, MongooseModule],
 })
 export class UserAccountsModule {}
