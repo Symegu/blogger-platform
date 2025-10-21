@@ -12,6 +12,6 @@ export class GetUserByIdQueryHandler implements IQueryHandler<GetUserByIdQuery> 
   constructor(private usersQueryRepository: UsersQueryRepository) {}
 
   async execute(query: GetUserByIdQuery) {
-    return this.usersQueryRepository.getByIdOrNotFoundFail(query.userId.toString());
+    return this.usersQueryRepository.getByIdOrNotFoundFail(query.userId);
   }
 }

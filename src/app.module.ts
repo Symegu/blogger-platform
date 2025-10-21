@@ -1,5 +1,7 @@
+import { configModule } from './dynamic-config-module';
+
 import { DynamicModule, Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AppController } from './app.controller';
@@ -8,13 +10,38 @@ import { CoreConfig } from './core/core.config';
 import { CoreModule } from './core/core.module';
 import { AllExceptionsFilter } from './core/exceptions/filters/all-exceptions.filter';
 import { DomainHttpExceptionsFilter } from './core/exceptions/filters/domain-exceptions.filter';
-import { configModule } from './dynamic-config-module';
 import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 import { TestingModule } from './modules/testing/testing.module';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerExceptionFilter } from './core/exceptions/filters/throttler-exceptions.filter';
 
 @Module({
-  imports: [CoreModule, configModule],
+  imports: [
+    CoreModule,
+    MongooseModule.forRootAsync({
+      useFactory: (coreConfig: CoreConfig) => {
+        const uri = coreConfig.mongoURI;
+        console.log('DB_URI', uri);
+
+        return {
+          uri: uri,
+        };
+      },
+      inject: [CoreConfig],
+    }),
+    UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
+    BloggersPlatformModule,
+    configModule,
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000, // секунды
+          limit: 10, // попыток
+        },
+      ],
+    }),
+  ],
   controllers: [AppController],
   //важен порядок регистрации! Первым сработает DomainHttpExceptionsFilter!
   providers: [
@@ -25,7 +52,15 @@ import { UserAccountsModule } from './modules/user-accounts/user-accounts.module
     },
     {
       provide: APP_FILTER,
+      useClass: ThrottlerExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
       useClass: DomainHttpExceptionsFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })
@@ -34,30 +69,10 @@ export class AppModule {
     // такой мудрёный способ мы используем, чтобы добавить к основным модулям необязательный модуль.
     // чтобы не обращаться в декораторе к переменной окружения через process.env в декораторе, потому что
     // запуск декораторов происходит на этапе склейки всех модулей до старта жизненного цикла самого NestJS
-    const modules: any[] = [
-      UserAccountsModule,
-      TestingModule,
-      BloggersPlatformModule,
-      MongooseModule.forRootAsync({
-        // если CoreModule не глобальный, то явно импортируем в монгусовский модуль, иначе CoreConfig не заинджектится
-        imports: [CoreModule],
-        useFactory: (coreConfig: CoreConfig) => {
-          // используем DI чтобы достать mongoURI контролируемо
-          return {
-            uri: coreConfig.mongoURI,
-          };
-        },
-        inject: [CoreConfig],
-      }),
-    ];
-
-    if (coreConfig.includeTestingModule) {
-      modules.push(TestingModule);
-    }
 
     return {
       module: AppModule,
-      imports: modules, // Add dynamic modules here
+      imports: [...(coreConfig.includeTestingModule ? [TestingModule] : [])], // Add dynamic modules here
     };
   }
 }

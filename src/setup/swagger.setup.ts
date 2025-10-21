@@ -3,23 +3,44 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { GLOBAL_PREFIX } from './global-prefix.setup';
 
-export function swaggerSetup(app: INestApplication) {
-  const config = new DocumentBuilder()
-    .setTitle('BLOGGER API')
-    .addBearerAuth()
-    .setVersion('1.0')
-    .addBearerAuth()
-    .addBasicAuth(
-      {
+export function swaggerSetup(app: INestApplication, isSwaggerEnabled: boolean) {
+  if (isSwaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('BLOGGER API')
+      .setVersion('1.0')
+      .addBearerAuth({
         type: 'http',
-        scheme: 'basic',
-      },
-      'basicAuth',
-    )
-    .build();
+        scheme: 'bearer',
+      })
+      .addBasicAuth(
+        {
+          type: 'http',
+          scheme: 'basic',
+        },
+        'basicAuth',
+      )
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(GLOBAL_PREFIX, app, document, {
-    customSiteTitle: 'Blogger Swagger',
-  });
+    const document = SwaggerModule.createDocument(app, config);
+
+    document.components = {
+      ...document.components,
+      securitySchemes: {
+        ...document.components?.securitySchemes,
+        refreshToken: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'refreshToken',
+          description: 'JWT refresh token inside cookie',
+        },
+      },
+    };
+    SwaggerModule.setup(GLOBAL_PREFIX, app, document, {
+      customSiteTitle: 'Blogger Swagger',
+      swaggerOptions: {
+        withCredentials: true,
+        displayRequestDuration: true,
+      },
+    });
+  }
 }

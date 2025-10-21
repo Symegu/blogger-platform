@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
 
 import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain-exception';
 import { ConfirmationInfoDto } from '../../../../modules/notifications/dto/confirmation-info.dto';
@@ -13,7 +14,9 @@ export class AuthQueryRepository {
     private UserModel: UserModelType,
   ) {}
 
-  async getMe(id: string): Promise<MeViewDto> {
+  async getMe(id: Types.ObjectId): Promise<MeViewDto> {
+    console.log(id);
+
     const user = await this.UserModel.findOne({ _id: id, deletedAt: null });
     if (!user) {
       throw new DomainException({

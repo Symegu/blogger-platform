@@ -22,7 +22,10 @@ export class UsersRepository {
   }
 
   async findOrNotFoundFail(id: Types.ObjectId): Promise<UserDocument> {
-    const user = await this.findById(id);
+    const user = await this.UserModel.findOne({
+      _id: id,
+      deletedAt: null,
+    });
 
     if (!user) {
       throw new DomainException({

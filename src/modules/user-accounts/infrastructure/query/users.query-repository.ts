@@ -5,6 +5,7 @@ import { DomainException, DomainExceptionCode } from '../../../../core/exception
 import { GetUsersQueryParams } from '../../api/input-dto/users.input-dto';
 import { UserViewDto } from '../../api/view-dto/users.view-dto';
 import { User, UserDocument, UserModelType } from '../../domain/user.entity';
+import { Types } from 'mongoose';
 
 export class UsersQueryRepository {
   constructor(
@@ -25,11 +26,14 @@ export class UsersQueryRepository {
     return user;
   }
 
-  async getByIdOrNotFoundFail(id: string): Promise<UserViewDto> {
+  async getByIdOrNotFoundFail(id: Types.ObjectId): Promise<UserViewDto> {
+    console.log(id);
+
     const user = await this.UserModel.findOne({
       _id: id,
       deletedAt: null,
     });
+    console.log('user id', user);
 
     if (!user) {
       throw new DomainException({

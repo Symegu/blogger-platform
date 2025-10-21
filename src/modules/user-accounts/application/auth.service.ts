@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 
 import { CryptoService } from './crypto.service';
-import { UsersService } from './users.service';
 import { DomainException, DomainExceptionCode } from '../../../core/exceptions/domain-exception';
 import { UserContextDto } from '../dto/create-user.dto';
 import { AuthRepository } from '../infrastructure/auth.repository';
@@ -15,9 +13,7 @@ export class AuthService {
     private usersRepository: UsersRepository,
     private usersQueryRepository: UsersQueryRepository,
     private authRepository: AuthRepository,
-    private jwtService: JwtService,
     private cryptoService: CryptoService,
-    private usersService: UsersService,
   ) {}
   async validateUser(loginOrEmail: string, password: string): Promise<UserContextDto | null> {
     const user = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
@@ -30,7 +26,8 @@ export class AuthService {
     if (!validPassword) {
       return null;
     }
-    return { id: user.id, login: user.login, email: user.email };
+
+    return { id: user._id, login: user.login, email: user.email };
   }
 
   // async login(userId: string): Promise<{ accessToken: string }> {

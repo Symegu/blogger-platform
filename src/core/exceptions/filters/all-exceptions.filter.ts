@@ -17,7 +17,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(status).json(responseBody);
   }
   private buildResponseBody(requestUrl: string, message: string): ErrorResponseBody {
-    //TODO: Replace with getter from configService. will be in the following lessons
     const isProduction = process.env.NODE_ENV === 'production';
 
     if (isProduction) {

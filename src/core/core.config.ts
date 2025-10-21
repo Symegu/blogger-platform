@@ -59,7 +59,7 @@ export class CoreConfig {
       'Set correct NODE_ENV value, available values: ' +
       configValidationUtility.getEnumValues(Environments).join(', '),
   })
-  env: string;
+  env: string = this.configService.get('NODE_ENV');
 
   @IsBoolean({
     message:

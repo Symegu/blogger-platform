@@ -4,8 +4,8 @@ import { INestApplication } from '@nestjs/common';
 import { pipesSetup } from './pipes.setup';
 import { swaggerSetup } from './swagger.setup';
 
-export function appSetup(app: INestApplication) {
+export function appSetup(app: INestApplication, isSwaggerEnabled: boolean) {
   pipesSetup(app);
   // globalPrefixSetup(app);
-  swaggerSetup(app);
+  swaggerSetup(app, isSwaggerEnabled);
 }

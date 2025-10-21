@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { Types } from 'mongoose';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+
+import { UserContextDto } from '../../dto/create-user.dto';
+import { UserAccountsConfig } from '../../user-accounts.config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor() {
+  constructor(userAccountsConfig: UserAccountsConfig) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.ACCESS_TOKEN_SECRET || 'access-token-secret', //TODO: move to env. will be in the following lessons
+      secretOrKey: userAccountsConfig.accessTokenSecret,
     });
   }
 
@@ -16,7 +20,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * функция принимает payload из jwt токена и возвращает то, что впоследствии будет записано в req.user
    * @param payload
    */
-  async validate(payload: string): Promise<string> {
-    return payload;
+  async validate(payload: {
+    userId: string;
+    login: string;
+    email: string;
+  }): Promise<UserContextDto> {
+    return {
+      id: new Types.ObjectId(payload.userId),
+      login: payload.login,
+      email: payload.email || '',
+    };
   }
 }

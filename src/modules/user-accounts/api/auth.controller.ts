@@ -1,7 +1,18 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+  Res,
+  Get,
+  Req,
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Response, Request } from 'express';
+import { Cookies } from 'src/core/decorators/param/extract-cookie.decorator';
 
 import { ExtractUserFromRequest } from '../../../core/decorators/param/extract-user-from-request';
 import { PasswordChangeDto } from '../../../modules/notifications/dto/confirmation-info.dto';
@@ -9,11 +20,17 @@ import { EmailInputDto } from '../../../modules/notifications/dto/email.input-dt
 import { LocalAuthGuard } from '../../../modules/user-accounts/guards/local/local-auth.guard';
 import { EmailService } from '../../notifications/application/email.service';
 import { AuthService } from '../application/auth.service';
+import { RefreshTokensCommand } from '../application/usecases/refresh-tokens.usecase';
 import { RegisterUserCommand } from '../application/usecases/register-user.usecase';
 import { UserContextDto } from '../dto/create-user.dto';
 import { CreateUserInputDto } from './input-dto/users.input-dto';
 import { LoginUserCommand } from '../application/usecases/login-user.usecase';
+import { LogoutUserCommand } from '../application/usecases/logout-user.usecase';
+// import { RefreshTokenGuard } from '../guards/apikey/refresh-token.guard';
+import { JwtAuthGuard } from '../guards/bearer/jwt-auth.guard';
 import { AuthQueryRepository } from '../infrastructure/query/auth.query-repository';
+import { Types } from 'mongoose';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -25,25 +42,38 @@ export class AuthController {
   ) {
     console.log('AuthController created');
   }
+
+  @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
-  //swagger doc
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        login: { type: 'string', example: 'login123' },
+        loginOrEmail: { type: 'string', example: 'login123' },
         password: { type: 'string', example: 'superpassword' },
       },
     },
   })
   async login(
-    @ExtractUserFromRequest() user: UserContextDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
+    console.log(user);
+
+    const ip = Array.isArray(req.headers['x-forwarded-for'])
+      ? req.headers['x-forwarded-for'][0]
+      : req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+    const title = req.headers['user-agent'] || 'device';
     const tokens = await this.commandBus.execute(
-      new LoginUserCommand({ userId: user.id, login: user.login }),
+      new LoginUserCommand({
+        userId: user.id,
+        login: user.login,
+        ip: ip,
+        title: title,
+      }),
     );
 
     res.cookie('refreshToken', tokens.refreshToken, {
@@ -53,9 +83,9 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
-  //swagger doc
   @ApiBody({
     schema: {
       type: 'object',
@@ -70,9 +100,9 @@ export class AuthController {
     return this.commandBus.execute(new RegisterUserCommand(body));
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
-  //swagger doc
   @ApiBody({
     schema: {
       type: 'object',
@@ -93,6 +123,7 @@ export class AuthController {
     return;
   }
 
+  @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Post('registration-email-resending')
   @HttpCode(HttpStatus.NO_CONTENT)
   //swagger doc
@@ -115,7 +146,6 @@ export class AuthController {
 
   @Post('password-recovery')
   @HttpCode(HttpStatus.NO_CONTENT)
-  //swagger doc
   @ApiBody({
     schema: {
       type: 'object',
@@ -135,7 +165,6 @@ export class AuthController {
 
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  //swagger doc
   @ApiBody({
     schema: {
       type: 'object',
@@ -153,9 +182,48 @@ export class AuthController {
     return;
   }
 
-  // @Get('me')
-  // @UseGuards(JwtAuthGuard)
-  // async me(@ExtractUserFromRequest() user: UserContextDto) {
-  //   return this.authQueryRepository.getMe(user.id);
-  // }
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async me(@ExtractUserFromRequest() user: UserContextDto) {
+    console.log(user);
+
+    return this.authQueryRepository.getMe(user.id);
+  }
+
+  @Post('refresh-token')
+  //@UseGuards(RefreshTokenGuard)
+  async refreshToken(
+    @Cookies('refreshToken') refreshToken: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const ip = Array.isArray(req.headers['x-forwarded-for'])
+      ? req.headers['x-forwarded-for'][0]
+      : req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+    const title = req.headers['user-agent'] || 'device';
+    const result = await this.commandBus.execute(new RefreshTokensCommand(refreshToken, ip, title));
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
+    return res.status(200).send({ accessToken: result.accessToken });
+  }
+
+  @Post('logout')
+  //@UseGuards(RefreshTokenGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(
+    @Cookies('refreshToken') refreshToken: string,
+    //@Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // const ip = Array.isArray(req.headers['x-forwarded-for'])
+    //   ? req.headers['x-forwarded-for'][0]
+    //   : req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+    // const title = req.headers['user-agent'] || 'device';
+    await this.commandBus.execute(new LogoutUserCommand(refreshToken));
+
+    res.clearCookie('refreshToken', { path: '/' });
+    return;
+  }
 }
