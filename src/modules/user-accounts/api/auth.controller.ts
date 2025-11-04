@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBody } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Response, Request } from 'express';
 import { Cookies } from 'src/core/decorators/param/extract-cookie.decorator';
 
@@ -18,27 +19,24 @@ import { ExtractUserFromRequest } from '../../../core/decorators/param/extract-u
 import { PasswordChangeDto } from '../../../modules/notifications/dto/confirmation-info.dto';
 import { EmailInputDto } from '../../../modules/notifications/dto/email.input-dto';
 import { LocalAuthGuard } from '../../../modules/user-accounts/guards/local/local-auth.guard';
-import { EmailService } from '../../notifications/application/email.service';
-import { AuthService } from '../application/auth.service';
+import { ChangePasswordCommand } from '../application/usecases/change-user-password.usecase';
+import { ConfirmEmailCommand } from '../application/usecases/confirm-email.usecase';
+import { LogoutUserCommand } from '../application/usecases/logout-user.usecase';
+import { PasswordRecoveryCommand } from '../application/usecases/password-recovery.usecase';
 import { RefreshTokensCommand } from '../application/usecases/refresh-tokens.usecase';
 import { RegisterUserCommand } from '../application/usecases/register-user.usecase';
+import { ResendEmailConfirmationCommand } from '../application/usecases/resend-email-confirmation.usecase';
 import { UserContextDto } from '../dto/create-user.dto';
 import { CreateUserInputDto } from './input-dto/users.input-dto';
 import { LoginUserCommand } from '../application/usecases/login-user.usecase';
-import { LogoutUserCommand } from '../application/usecases/logout-user.usecase';
-// import { RefreshTokenGuard } from '../guards/apikey/refresh-token.guard';
 import { JwtAuthGuard } from '../guards/bearer/jwt-auth.guard';
-import { AuthQueryRepository } from '../infrastructure/query/auth.query-repository';
-import { Types } from 'mongoose';
-import { Throttle } from '@nestjs/throttler';
+import { AuthSqlQueryRepository } from '../infrastructure/query/auth-sql.query-repository';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private commandBus: CommandBus,
-    private authService: AuthService,
-    private emailService: EmailService,
-    private authQueryRepository: AuthQueryRepository,
+    private authQueryRepository: AuthSqlQueryRepository,
   ) {
     console.log('AuthController created');
   }
@@ -61,12 +59,17 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<{ accessToken: string }> {
-    console.log(user);
-
     const ip = Array.isArray(req.headers['x-forwarded-for'])
       ? req.headers['x-forwarded-for'][0]
       : req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
     const title = req.headers['user-agent'] || 'device';
+    console.log({
+      userId: user.id,
+      login: user.login,
+      ip: ip,
+      title: title,
+    });
+
     const tokens = await this.commandBus.execute(
       new LoginUserCommand({
         userId: user.id,
@@ -118,9 +121,7 @@ export class AuthController {
     // @Query('code') code: string,
     @Body('code') code: string,
   ) {
-    const user = await this.authQueryRepository.getUserByConfirmationCode(code);
-    await this.authService.confirmUserEmail(user.email);
-    return;
+    return this.commandBus.execute(new ConfirmEmailCommand(code));
   }
 
   @Throttle({ default: { limit: 5, ttl: 10000 } })
@@ -139,9 +140,7 @@ export class AuthController {
     },
   })
   async emailConfirmationResending(@Body() dto: EmailInputDto) {
-    const updatedUser = await this.authService.changeEmailConfirmation(dto.email);
-    this.emailService.sendConfirmationEmail(updatedUser.email, updatedUser.confirmationCode);
-    return;
+    return await this.commandBus.execute(new ResendEmailConfirmationCommand(dto.email));
   }
 
   @Post('password-recovery')
@@ -158,9 +157,7 @@ export class AuthController {
     },
   })
   async passwordRecovery(@Body() dto: EmailInputDto) {
-    const user = await this.authService.getPasswordRecovery(dto.email);
-    this.emailService.sendRecoveryPasswordEmail(user.email, user.recoveryCode!);
-    return;
+    return await this.commandBus.execute(new PasswordRecoveryCommand(dto.email));
   }
 
   @Post('new-password')
@@ -177,16 +174,14 @@ export class AuthController {
     },
   })
   async setNewPassword(@Body() dto: PasswordChangeDto) {
-    const user = await this.authQueryRepository.getUserByRecoveryCode(dto.recoveryCode);
-    await this.authService.changeUserPassword(user.email, dto.newPassword);
-    return;
+    return await this.commandBus.execute(
+      new ChangePasswordCommand(dto.newPassword, dto.recoveryCode),
+    );
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async me(@ExtractUserFromRequest() user: UserContextDto) {
-    console.log(user);
-
     return this.authQueryRepository.getMe(user.id);
   }
 

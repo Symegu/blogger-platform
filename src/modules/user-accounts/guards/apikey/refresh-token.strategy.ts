@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
-import { Types } from 'mongoose';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UserAccountsConfig } from '../../user-accounts.config';
@@ -25,12 +24,12 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
   async validate(payload: {
-    id: string;
+    id: number;
     deviceId: string;
-  }): Promise<{ id: Types.ObjectId; deviceId: Types.ObjectId }> {
+  }): Promise<{ id: number; deviceId: string }> {
     return {
-      id: new Types.ObjectId(payload.id),
-      deviceId: new Types.ObjectId(payload.deviceId),
+      id: payload.id,
+      deviceId: payload.deviceId,
     };
   }
 }

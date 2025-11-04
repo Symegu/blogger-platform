@@ -2,6 +2,7 @@ import { configModule } from './dynamic-config-module';
 
 import { DynamicModule, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AppController } from './app.controller';
@@ -10,7 +11,7 @@ import { CoreConfig } from './core/core.config';
 import { CoreModule } from './core/core.module';
 import { AllExceptionsFilter } from './core/exceptions/filters/all-exceptions.filter';
 import { DomainHttpExceptionsFilter } from './core/exceptions/filters/domain-exceptions.filter';
-import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
+//import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 import { TestingModule } from './modules/testing/testing.module';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -19,6 +20,21 @@ import { ThrottlerExceptionFilter } from './core/exceptions/filters/throttler-ex
 @Module({
   imports: [
     CoreModule,
+    TypeOrmModule.forRootAsync({
+      useFactory: (coreConfig: CoreConfig) => {
+        return {
+          type: 'postgres',
+          host: 'localhost',
+          port: 5432,
+          username: 'postgres',
+          password: coreConfig.postgresPassword,
+          database: coreConfig.database,
+          autoLoadEntities: true,
+          synchronize: true,
+        };
+      },
+      inject: [CoreConfig],
+    }),
     MongooseModule.forRootAsync({
       useFactory: (coreConfig: CoreConfig) => {
         const uri = coreConfig.mongoURI;
@@ -31,13 +47,13 @@ import { ThrottlerExceptionFilter } from './core/exceptions/filters/throttler-ex
       inject: [CoreConfig],
     }),
     UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
-    BloggersPlatformModule,
+    //BloggersPlatformModule,
     configModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
           ttl: 60000, // секунды
-          limit: 10, // попыток
+          limit: 1000, // попыток
         },
       ],
     }),

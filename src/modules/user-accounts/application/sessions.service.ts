@@ -1,19 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserAccountsConfig } from '../user-accounts.config';
+import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
+
 import {
   ACCESS_TOKEN_STRATEGY_INJECT_TOKEN,
   REFRESH_TOKEN_STRATEGY_INJECT_TOKEN,
 } from '../constants/auth-tokens.inject-constant';
-import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
-import { Types } from 'mongoose';
-import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
-import { SessionsRepository } from '../infrastructure/sessions.repository';
+import { UsersSqlQueryRepository } from '../infrastructure/query/users-sql.query-repository';
+import { SessionsSqlRepository } from '../infrastructure/sessions.sql-repository';
+import { UserAccountsConfig } from '../user-accounts.config';
 
 @Injectable()
 export class SessionsService {
   constructor(
-    private usersQueryRepository: UsersQueryRepository,
+    //private usersQueryRepository: UsersQueryRepository,
+    private usersSqlQueryRepository: UsersSqlQueryRepository,
     private jwtService: JwtService,
     private userAccountsConfig: UserAccountsConfig,
     @Inject(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN)
@@ -21,15 +22,16 @@ export class SessionsService {
 
     @Inject(REFRESH_TOKEN_STRATEGY_INJECT_TOKEN)
     private refreshTokenContext: JwtService,
-    private sessionsRepository: SessionsRepository,
+    private sessionsSqlRepository: SessionsSqlRepository,
   ) {}
 
   async validateRefreshToken(refreshToken: string) {
-    await this.sessionsRepository.isTokenRevoked(refreshToken);
+    await this.sessionsSqlRepository.isTokenRevoked(refreshToken);
     try {
       const payload = this.jwtService.verify(refreshToken, {
         secret: this.userAccountsConfig.refreshTokenSecret,
       });
+
       return payload;
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
@@ -45,8 +47,10 @@ export class SessionsService {
     }
   }
 
-  async accessTokenSign(userId: Types.ObjectId, login?: string) {
-    const user = await this.usersQueryRepository.getByIdOrNotFoundFail(userId);
+  async accessTokenSign(userId: number, login?: string) {
+    //const user = await this.usersQueryRepository.getByIdOrNotFoundFail(userId);
+    const user = await this.usersSqlQueryRepository.getByIdOrNotFoundFail(userId);
+
     const accessToken = this.accessTokenContext.sign({
       userId: userId,
       login: login ? login : user.login,
@@ -55,7 +59,7 @@ export class SessionsService {
     return accessToken;
   }
 
-  async refreshTokenSign(userId: Types.ObjectId, deviceId: Types.ObjectId) {
+  async refreshTokenSign(userId: number, deviceId: string) {
     const refreshToken = this.refreshTokenContext.sign({
       userId: userId,
       deviceId: deviceId,

@@ -10,7 +10,7 @@ export class EmailService {
     await this.mailerService.sendMail({
       to: email, // <- вот сюда передаём получателя
       subject: 'Подтверждение регистрации',
-      text: `Confirm registration via link: https://ceea78aa37495d.lhr.life?code=${code}`,
+      text: `Confirm registration via link: https://351d2bcc5c1a5f.lhr.life?code=${code}`,
       // можешь добавить html, если хочешь красиво
       html: `<h3>Подтверждение регистрации</h3>
              <p>Пройдите по ссылке:</p>
@@ -23,7 +23,7 @@ export class EmailService {
     await this.mailerService.sendMail({
       to: email, // <- вот сюда передаём получателя
       subject: 'Восстановление пароля',
-      text: `Confirm registration via link: https://ceea78aa37495d.lhr.life?code=${code}`,
+      text: `Confirm registration via link: https://351d2bcc5c1a5f.lhr.life?code=${code}`,
       // можешь добавить html, если хочешь красиво
       html: `<h3>Восстановление пароля</h3>
              <p>Пройдите по ссылке:</p>

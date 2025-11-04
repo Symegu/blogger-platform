@@ -1,17 +1,16 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 
-import { UsersQueryRepository } from '../../infrastructure/query/users.query-repository';
+import { UsersSqlQueryRepository } from '../../infrastructure/query/users-sql.query-repository';
 
 export class GetUserByIdQuery {
-  constructor(public userId: Types.ObjectId) {}
+  constructor(public userId: number) {}
 }
 
 @QueryHandler(GetUserByIdQuery)
 export class GetUserByIdQueryHandler implements IQueryHandler<GetUserByIdQuery> {
-  constructor(private usersQueryRepository: UsersQueryRepository) {}
+  constructor(private usersSqlQueryRepository: UsersSqlQueryRepository) {}
 
   async execute(query: GetUserByIdQuery) {
-    return this.usersQueryRepository.getByIdOrNotFoundFail(query.userId);
+    return this.usersSqlQueryRepository.getByIdOrNotFoundFail(query.userId);
   }
 }

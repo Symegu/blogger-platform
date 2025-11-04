@@ -1,17 +1,15 @@
-import { Types } from 'mongoose';
-
 export class RefreshTokenPayloadDto {
-  userId: Types.ObjectId;
-  deviceId: Types.ObjectId;
+  userId: number;
+  deviceId: string;
 }
 export class AccessTokenPayloadDto {
-  userId: Types.ObjectId;
+  userId: number;
   login: string;
 }
 
 export class SessionDomainDto {
-  userId: Types.ObjectId;
-  deviceId: Types.ObjectId;
+  userId: number;
+  deviceId: string;
   title: string | null;
   ip: string | null;
   refreshTokenHash: string;

@@ -1,8 +1,9 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Cookies } from 'src/core/decorators/param/extract-cookie.decorator';
+
 import { GetUserSessionsQuery } from '../application/queries/get-user-sessions.query';
-import { TerminateOtherSessionsCommand } from '../application/usecases/terminate-other-sessions';
+import { TerminateOtherSessionsCommand } from '../application/usecases/terminate-other-sessions.usecase';
 import { TerminateDeviceSessionCommand } from '../application/usecases/terminate-session.usecase';
 
 @Controller('security/devices')

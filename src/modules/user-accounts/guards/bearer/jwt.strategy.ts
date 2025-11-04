@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Types } from 'mongoose';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { UserContextDto } from '../../dto/create-user.dto';
@@ -21,12 +20,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @param payload
    */
   async validate(payload: {
-    userId: string;
+    userId: number;
     login: string;
     email: string;
   }): Promise<UserContextDto> {
     return {
-      id: new Types.ObjectId(payload.userId),
+      id: payload.userId,
       login: payload.login,
       email: payload.email || '',
     };

@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
+//import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { SessionsService } from '../sessions.service';
 import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
-import { SessionsQueryRepository } from '../../infrastructure/query/sessions.query-repository';
-import { Types } from 'mongoose';
+import { SessionsSqlRepository } from '../../infrastructure/sessions.sql-repository';
+import { SessionsSqlQueryRepository } from '../../infrastructure/query/sessions-sql.query-repository';
 
 export class TerminateDeviceSessionCommand {
   constructor(
@@ -17,8 +17,8 @@ export class TerminateDeviceSessionUseCase
   implements ICommandHandler<TerminateDeviceSessionCommand>
 {
   constructor(
-    private readonly sessionsRepository: SessionsRepository,
-    private readonly sessionsQueryRepository: SessionsQueryRepository,
+    private readonly sessionsSqlRepository: SessionsSqlRepository,
+    private readonly sessionsSqlQueryRepository: SessionsSqlQueryRepository,
     private sessionsService: SessionsService,
   ) {}
 
@@ -30,19 +30,20 @@ export class TerminateDeviceSessionUseCase
       });
     }
     const payload = await this.sessionsService.validateRefreshToken(refreshToken);
-    const session = await this.sessionsRepository.findByTokenPayloadOrFail(payload);
-    await this.validateDeviceOwner(session.userId, deviceId);
-    await this.sessionsRepository.deleteByDeviceId(session.userId, new Types.ObjectId(deviceId));
+    const session = await this.sessionsSqlRepository.findByTokenPayloadOrFail(payload);
+    await this.validateDeviceOwner(session.user_id, deviceId);
+    console.log('session', session);
+
+    await this.sessionsSqlRepository.invalidateSession(session.user_id, deviceId);
+    console.log('invalidate fine');
+
     //await this.sessionsRepository.invalidateToken(refreshToken);
     return;
   }
 
-  private async validateDeviceOwner(
-    currentUserId: Types.ObjectId,
-    targetDeviceId: string,
-  ): Promise<void> {
+  private async validateDeviceOwner(currentUserId: number, targetDeviceId: string): Promise<void> {
     // Находим сессию по deviceId
-    const targetSession = await this.sessionsQueryRepository.findByDeviceId(targetDeviceId);
+    const targetSession = await this.sessionsSqlQueryRepository.findDataByDeviceId(targetDeviceId);
 
     if (!targetSession) {
       throw new DomainException({
@@ -50,8 +51,13 @@ export class TerminateDeviceSessionUseCase
         message: 'Session not found',
       });
     }
-
-    if (!targetSession.userId.equals(currentUserId)) {
+    console.log(
+      'Target session user_id:',
+      targetSession.user_id,
+      'Current user id:',
+      currentUserId,
+    );
+    if (targetSession.user_id !== currentUserId) {
       throw new DomainException({
         code: DomainExceptionCode.Forbidden,
         message: 'You can only terminate your own sessions',

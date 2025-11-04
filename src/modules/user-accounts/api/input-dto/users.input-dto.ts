@@ -41,6 +41,6 @@ export class UpdateUserInputDto implements UpdateUserDto {
 //наследуемся от класса BaseQueryParams, где уже есть pageNumber, pageSize и т.п., чтобы не дублировать эти свойства
 export class GetUsersQueryParams extends BaseQueryParams {
   sortBy = UsersSortBy.CreatedAt;
-  searchLoginTerm: string | null = null;
-  searchEmailTerm: string | null = null;
+  searchLoginTerm: string | null;
+  searchEmailTerm: string | null;
 }

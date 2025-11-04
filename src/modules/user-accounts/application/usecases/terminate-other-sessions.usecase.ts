@@ -1,7 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { SessionsService } from '../sessions.service';
 import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
+
+import { SessionsSqlRepository } from '../../infrastructure/sessions.sql-repository';
+import { SessionsService } from '../sessions.service';
 
 export class TerminateOtherSessionsCommand {
   constructor(public readonly refreshToken: string) {}
@@ -12,7 +13,7 @@ export class TerminateOtherSessionsUseCase
   implements ICommandHandler<TerminateOtherSessionsCommand>
 {
   constructor(
-    private readonly sessionsRepository: SessionsRepository,
+    private readonly sessionsSqlRepository: SessionsSqlRepository,
     private sessionsService: SessionsService,
   ) {}
 
@@ -24,8 +25,10 @@ export class TerminateOtherSessionsUseCase
       });
     }
     const payload = await this.sessionsService.validateRefreshToken(refreshToken);
-    const session = await this.sessionsRepository.findByTokenPayloadOrFail(payload);
-    await this.sessionsRepository.deleteAllOtherDevices(session.userId, session.deviceId);
+    const session = await this.sessionsSqlRepository.findByTokenPayloadOrFail(payload);
+    console.log('TerminateOtherSessionsCommand', session);
+
+    await this.sessionsSqlRepository.deleteAllOtherDevices(session.user_id, session.device_id);
     return;
   }
 }

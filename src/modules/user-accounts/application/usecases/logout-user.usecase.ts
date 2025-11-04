@@ -1,9 +1,10 @@
 // src/modules/auth/use-cases/logout.usecase.ts
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
+//import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
 import { SessionsService } from '../sessions.service';
+import { SessionsSqlRepository } from '../../infrastructure/sessions.sql-repository';
 
 export class LogoutUserCommand {
   constructor(
@@ -16,7 +17,7 @@ export class LogoutUserCommand {
 @CommandHandler(LogoutUserCommand)
 export class LogoutUseCase implements ICommandHandler<LogoutUserCommand, void> {
   constructor(
-    private readonly sessionsRepository: SessionsRepository,
+    private readonly sessionsSqlRepository: SessionsSqlRepository,
     private sessionsService: SessionsService,
   ) {}
 
@@ -28,10 +29,10 @@ export class LogoutUseCase implements ICommandHandler<LogoutUserCommand, void> {
       });
     }
     const payload = await this.sessionsService.validateRefreshToken(refreshToken);
-    const session = await this.sessionsRepository.findByTokenPayloadOrFail(payload);
-    console.log('session', session);
-    await this.sessionsRepository.invalidateToken(refreshToken);
-    await this.sessionsRepository.deleteByDeviceId(session.userId, session.deviceId);
+    const session = await this.sessionsSqlRepository.findByTokenPayloadOrFail(payload);
+    console.log(session);
+    await this.sessionsSqlRepository.invalidateSession(session.user_id, session.device_id);
+    await this.sessionsSqlRepository.invalidateToken(refreshToken);
     return;
   }
 }

@@ -1,7 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { SessionsQueryRepository } from '../../infrastructure/query/sessions.query-repository';
-import { SessionsService } from '../sessions.service';
 import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
+
+import { SessionsSqlQueryRepository } from '../../infrastructure/query/sessions-sql.query-repository';
+import { SessionsService } from '../sessions.service';
+
 export class GetUserSessionsQuery {
   constructor(public readonly refreshToken: string) {}
 }
@@ -9,7 +11,7 @@ export class GetUserSessionsQuery {
 @QueryHandler(GetUserSessionsQuery)
 export class GetUserSessionsQueryHandler implements IQueryHandler<GetUserSessionsQuery> {
   constructor(
-    private sessionsQueryRepository: SessionsQueryRepository,
+    private sessionsSqlQueryRepository: SessionsSqlQueryRepository,
     private sessionsService: SessionsService,
   ) {}
   async execute({ refreshToken }: GetUserSessionsQuery): Promise<any> {
@@ -20,9 +22,9 @@ export class GetUserSessionsQueryHandler implements IQueryHandler<GetUserSession
       });
     }
     const payload = await this.sessionsService.validateRefreshToken(refreshToken);
-    console.log(payload);
+    console.log('payload', payload);
 
-    const sessions = await this.sessionsQueryRepository.findByUserId(payload.userId);
+    const sessions = await this.sessionsSqlQueryRepository.findByUserId(payload.userId);
 
     return sessions;
   }

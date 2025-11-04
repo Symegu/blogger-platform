@@ -1,10 +1,10 @@
 import { Controller, Delete, HttpCode, HttpStatus } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 
 @Controller('testing')
 export class TestingController {
-  constructor(@InjectConnection() private readonly databaseConnection: Connection) {
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {
     console.log('testing controller created');
   }
 
@@ -13,15 +13,18 @@ export class TestingController {
   async deleteAll() {
     console.log('testing all-data deleteAll');
 
-    const collections = await this.databaseConnection.listCollections();
+    const tables = [
+      'RevokedTokens',
+      'Sessions',
+      'PasswordRecoveryCodes',
+      'EmailConfirmationCodes',
+      'UserNames',
+      'Users',
+    ];
 
-    const promises = collections.map(collection =>
-      this.databaseConnection.collection(collection.name).deleteMany({}),
-    );
-    await Promise.all(promises);
-
-    // return {
-    //   status: 'succeeded',
-    // };
+    await this.dataSource.query(`
+    TRUNCATE TABLE ${tables.map(table => `"${table}"`).join(', ')} 
+    RESTART IDENTITY
+  `);
   }
 }

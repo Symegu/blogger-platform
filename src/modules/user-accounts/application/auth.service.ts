@@ -1,107 +1,39 @@
 import { Injectable } from '@nestjs/common';
 
 import { CryptoService } from './crypto.service';
-import { DomainException, DomainExceptionCode } from '../../../core/exceptions/domain-exception';
 import { UserContextDto } from '../dto/create-user.dto';
-import { AuthRepository } from '../infrastructure/auth.repository';
-import { UsersQueryRepository } from '../infrastructure/query/users.query-repository';
-import { UsersRepository } from '../infrastructure/users.repository';
+import { UsersSqlQueryRepository } from '../infrastructure/query/users-sql.query-repository';
+import { UsersSqlRepository } from '../infrastructure/users.sql-repository';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersRepository: UsersRepository,
-    private usersQueryRepository: UsersQueryRepository,
-    private authRepository: AuthRepository,
+    private usersSqlRepository: UsersSqlRepository,
+    private usersSqlQueryRepository: UsersSqlQueryRepository,
     private cryptoService: CryptoService,
   ) {}
   async validateUser(loginOrEmail: string, password: string): Promise<UserContextDto | null> {
-    const user = await this.usersRepository.findByLoginOrEmail(loginOrEmail);
-    if (!user) {
+    const users = await this.usersSqlRepository.findByLoginOrEmail(loginOrEmail);
+    console.log(users);
+
+    if (users.length === 0) {
       return null;
     }
 
-    const validPassword = await this.cryptoService.comparePassword(password, user.passwordHash);
+    const validPassword = await this.cryptoService.comparePassword(
+      password,
+      users[0].password_hash,
+    );
 
     if (!validPassword) {
       return null;
     }
 
-    return { id: user._id, login: user.login, email: user.email };
+    return { id: users[0].id, login: users[0].login, email: users[0].email };
   }
 
-  // async login(userId: string): Promise<{ accessToken: string }> {
-  //   const accessToken = await this.jwtService.sign({
-  //     id: userId,
-  //   } as UserContextDto);
-  //   return { accessToken: accessToken };
-  // }
-
-  async confirmUserEmail(email: string) {
-    return await this.authRepository.confirmUserEmail(email);
-  }
-
-  async changeEmailConfirmation(email: string) {
-    const user = await this.usersQueryRepository.findByEmail(email);
-    if (!user) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'User not found',
-        errorsMessages: [{ message: 'User not found', field: 'email' }],
-      });
-    }
-    if (!user.isEmailConfirmed === false) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Email already confirmed',
-        errorsMessages: [{ message: 'Email already confirmed', field: 'email' }],
-      });
-    }
-
-    const { confirmationCode, confirmationCodeExpiration } =
-      this.cryptoService.generateConfirmation();
-    return await this.authRepository.setUserConfirmation({
-      email,
-      confirmationCode,
-      confirmationCodeExpiration,
-    });
-  }
-
-  async getPasswordRecovery(email: string) {
-    const user = await this.usersQueryRepository.findByEmail(email);
-    if (!user) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'User not found',
-        errorsMessages: [{ message: 'User not found', field: 'email' }],
-      });
-    }
-    if (!user.isEmailConfirmed === true) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Email is not confirmed',
-        errorsMessages: [{ message: 'Email is not confirmed', field: 'email' }],
-      });
-    }
-    const { confirmationCode, confirmationCodeExpiration } =
-      this.cryptoService.generateConfirmation();
-    return await this.authRepository.setUserRecovery({
-      email,
-      recoveryCode: confirmationCode,
-      recoveryCodeExpiration: confirmationCodeExpiration,
-    });
-  }
-
-  async changeUserPassword(email: string, newPassword: string) {
-    const user = await this.usersQueryRepository.findByEmail(email);
-    if (!user) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'User not found',
-        errorsMessages: [{ message: 'User not found', field: 'email' }],
-      });
-    }
-    const hashPassword = await this.cryptoService.createHash(newPassword);
-    return await this.authRepository.setNewUserPassword(user.email, hashPassword);
+  async ensureUserUniqueness(email: string, login: string) {
+    await this.usersSqlQueryRepository.findByEmail(email);
+    await this.usersSqlQueryRepository.findByLogin(login);
   }
 }

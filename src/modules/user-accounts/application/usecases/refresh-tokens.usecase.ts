@@ -1,13 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { SessionsService } from '../sessions.service';
 import { DomainException, DomainExceptionCode } from 'src/core/exceptions/domain-exception';
+
+import { SessionsSqlRepository } from '../../infrastructure/sessions.sql-repository';
+import { SessionsService } from '../sessions.service';
 
 export class RefreshTokensCommand {
   constructor(
     public readonly refreshToken: string,
-    // public readonly res: Response,
     public readonly ip: string,
     public readonly title: string,
   ) {}
@@ -16,7 +15,7 @@ export class RefreshTokensCommand {
 @CommandHandler(RefreshTokensCommand)
 export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensCommand> {
   constructor(
-    private readonly sessionsRepository: SessionsRepository,
+    private readonly sessionsSqlRepository: SessionsSqlRepository,
     private sessionsService: SessionsService,
   ) {}
 
@@ -28,22 +27,28 @@ export class RefreshTokensUseCase implements ICommandHandler<RefreshTokensComman
       });
     }
     const payload = await this.sessionsService.validateRefreshToken(refreshToken);
-    const session = await this.sessionsRepository.findByTokenPayloadOrFail(payload);
-    await this.sessionsRepository.updateSession({
-      userId: session.userId,
-      deviceId: session.deviceId,
+
+    const session = await this.sessionsSqlRepository.findByTokenPayloadOrFail({
+      userId: payload.userId,
+      deviceId: payload.deviceId,
+    });
+
+    await this.sessionsSqlRepository.updateSession({
+      userId: session.user_id,
+      deviceId: session.device_id,
       ip: ip,
       title: title,
       lastActiveDate: new Date(),
       expiresAt: new Date(Date.now() + 20 * 1000),
     });
-    const newAccessToken = await this.sessionsService.accessTokenSign(session.userId);
+
+    const newAccessToken = await this.sessionsService.accessTokenSign(session.user_id);
     const newRefreshToken = await this.sessionsService.refreshTokenSign(
-      session.userId,
-      session.deviceId,
+      session.user_id,
+      session.device_id,
     );
 
-    await this.sessionsRepository.invalidateToken(refreshToken);
+    await this.sessionsSqlRepository.invalidateToken(refreshToken);
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 }

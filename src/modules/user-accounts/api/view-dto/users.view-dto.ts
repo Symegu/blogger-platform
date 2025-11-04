@@ -1,4 +1,4 @@
-import { UserDocument } from '../../domain/user.entity';
+import { UserData } from '../../domain/user.entity';
 
 export class UserViewDto {
   id: string;
@@ -8,15 +8,26 @@ export class UserViewDto {
   // firstName: string;
   // lastName: string | null;
 
-  static mapToView(user: UserDocument): UserViewDto {
+  // static mapToView(user: UserDocument): UserViewDto {
+  //   const dto = new UserViewDto();
+
+  //   dto.email = user.email;
+  //   dto.login = user.login;
+  //   dto.id = user._id.toString();
+  //   dto.createdAt = user.createdAt;
+  //   // dto.firstName = user.name.firstName;
+  //   // dto.lastName = user.name.lastName;
+
+  //   return dto;
+  // }
+
+  static mapFromSql(user: UserData): UserViewDto {
     const dto = new UserViewDto();
 
-    dto.email = user.email;
+    dto.id = user.id.toString();
     dto.login = user.login;
-    dto.id = user._id.toString();
-    dto.createdAt = user.createdAt;
-    // dto.firstName = user.name.firstName;
-    // dto.lastName = user.name.lastName;
+    dto.email = user.email;
+    dto.createdAt = user.created_at;
 
     return dto;
   }

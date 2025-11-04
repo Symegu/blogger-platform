@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 
-import { User, UserDocument, UserModelType } from '../../domain/user.entity';
-import { CreateUserDto } from '../../dto/create-user.dto';
+import { CreateUserData, CreateUserDto } from '../../dto/create-user.dto';
 import { CryptoService } from '../crypto.service';
 
 @Injectable()
@@ -10,15 +8,11 @@ export class UsersFactory {
   // ❌ passwordHash: string; ни в коем случае не шарим состояние между методов через св-ва объекта (сервиса, юзкейса, квери, репозитория)
   // потому что синглтон, между разными запросами может быть перезапись данных
 
-  constructor(
-    private readonly cryptoService: CryptoService,
-    @InjectModel(User.name)
-    private UserModel: UserModelType,
-  ) {}
+  constructor(private readonly cryptoService: CryptoService) {}
 
-  async create(dto: CreateUserDto): Promise<UserDocument> {
+  async create(dto: CreateUserDto): Promise<CreateUserData> {
     const passwordHash = await this.createPasswordHash(dto);
-    const user = this.createUserInstance(dto, passwordHash);
+    const user = await this.createUserData(dto, passwordHash);
 
     return user;
   }
@@ -28,13 +22,16 @@ export class UsersFactory {
     return passwordHash;
   }
 
-  private createUserInstance(dto: CreateUserDto, passwordHash: string) {
-    const user = this.UserModel.createInstance({
-      email: dto.email,
+  private async createUserData(dto: CreateUserDto, passwordHash: string) {
+    return {
       login: dto.login,
       passwordHash: passwordHash,
-    });
+      email: dto.email,
+    };
 
-    return user;
+    // const userNameData: CreateUserNameData = {
+    //   firstName: 'firstName xxx',
+    //   lastName: 'lastName yyy',
+    // };
   }
 }
