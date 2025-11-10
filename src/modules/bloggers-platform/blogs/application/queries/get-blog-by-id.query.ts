@@ -1,16 +1,15 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 
-import { BlogsQueryRepository } from '../../infrastructure/query/blogs.query.repository';
+import { BlogsSqlQueryRepository } from '../../infrastructure/query/blogs-sql.query-repository';
 
 export class GetBlogByIdQuery {
-  constructor(public id: Types.ObjectId) {}
+  constructor(public id: number) {}
 }
 
 @QueryHandler(GetBlogByIdQuery)
 export class GetBlogByIdQueryHandler implements IQueryHandler<GetBlogByIdQuery> {
-  constructor(private readonly blogsQueryRepository: BlogsQueryRepository) {}
+  constructor(private readonly blogsSqlQueryRepository: BlogsSqlQueryRepository) {}
   async execute(query: GetBlogByIdQuery) {
-    return this.blogsQueryRepository.getByIdOrNotFoundFail(query.id);
+    return this.blogsSqlQueryRepository.getByIdOrNotFoundFail(query.id);
   }
 }

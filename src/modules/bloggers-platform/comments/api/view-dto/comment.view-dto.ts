@@ -1,7 +1,7 @@
 import { LikesInfoViewDto } from 'src/modules/likes/api/view-dto/like.view-dto';
-import { LikeStatus } from 'src/modules/likes/domain/like.entity';
 
-import { CommentDocument } from '../../domain/comments.entity';
+import { CommentDataWithLikes } from '../../domain/comments.entity';
+
 export class CommentatorInfoDto {
   userId: string;
   userLogin: string;
@@ -13,18 +13,16 @@ export class CommentViewDto {
   createdAt: Date;
   likesInfo: LikesInfoViewDto;
 
-  static mapToView(comment: CommentDocument): CommentViewDto {
+  static mapFromSql(comment: CommentDataWithLikes): CommentViewDto {
     const dto = new CommentViewDto();
 
-    dto.id = comment._id.toString();
+    dto.id = comment.id.toString();
     dto.content = comment.content;
     dto.commentatorInfo = {
-      userId: comment.commentatorInfo.userId.toString(),
-      userLogin: comment.commentatorInfo.userLogin,
+      userId: comment.user_id.toString(),
+      userLogin: comment.user_login,
     };
-    dto.createdAt = comment.createdAt;
-
-    // Если likesInfo передан — используем; иначе дефолт
+    dto.createdAt = comment.created_at;
     dto.likesInfo = {
       likesCount: comment.likesInfo?.likesCount ?? 0,
       dislikesCount: comment.likesInfo?.dislikesCount ?? 0,

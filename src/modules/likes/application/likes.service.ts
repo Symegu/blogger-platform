@@ -1,104 +1,99 @@
 import { Injectable } from '@nestjs/common';
-import { Types } from 'mongoose';
 
-import { LikeableEntity, LikeStatus } from '../domain/like.entity';
-import { LikesRepository } from '../infrastructure/likes.repository';
+import { LikeStatus } from '../api/input-dto/like.input-dto';
+import {
+  ExtendedLikesInfoViewDto,
+  LikeDetailsViewDto,
+  LikesInfoViewDto,
+} from '../api/view-dto/like.view-dto';
+import { LikeableEntity } from '../domain/like.entity';
+import { LikesSqlRepository } from '../infrastructure/likes-sql.repository';
+import { LikesSqlQueryRepository } from '../infrastructure/query/likes-sql.query-repository';
 
 @Injectable()
 export class LikesService {
-  constructor(private readonly likesRepository: LikesRepository) {}
+  constructor(
+    private readonly likesSqlRepository: LikesSqlRepository,
+    private readonly likesSqlQueryRepository: LikesSqlQueryRepository,
+  ) {}
 
-  // === PUBLIC METHODS ===
-
-  /**
-   * Формирует extendedLikesInfo / likesInfo для одной сущности
-   */
   async buildLikesInfo(
-    entityId: Types.ObjectId,
+    entityId: number,
     entity: LikeableEntity,
-    userId?: Types.ObjectId | null,
-  ): Promise<{
-    likesCount: number;
-    dislikesCount: number;
-    myStatus: LikeStatus;
-    newestLikes: {
-      addedAt: Date;
-      userId: string;
-      login: string;
-    }[];
-  }> {
+    userId?: number | null,
+  ): Promise<ExtendedLikesInfoViewDto | LikesInfoViewDto> {
     const [likesCount, dislikesCount, myStatus, newestLikes] = await Promise.all([
-      this.likesRepository.countByStatus(entityId, entity, LikeStatus.Like),
-      this.likesRepository.countByStatus(entityId, entity, LikeStatus.Dislike),
+      this.likesSqlRepository.countByStatus(entityId, entity, 'Like'),
+      this.likesSqlRepository.countByStatus(entityId, entity, 'Dislike'),
       this.calculateMyStatus(userId, entityId, entity),
-      entity === LikeableEntity.Post ? this.calculateNewestLikes(entityId, entity) : [],
+      entity === 'Post' ? this.calculateNewestLikes(entityId, entity) : [],
     ]);
-    console.log('newestLikes', likesCount, dislikesCount, myStatus, newestLikes);
 
-    return {
-      likesCount,
-      dislikesCount,
-      myStatus,
-      newestLikes,
-    };
+    if (entity === 'Post') {
+      return {
+        likesCount,
+        dislikesCount,
+        myStatus,
+        newestLikes,
+      } as ExtendedLikesInfoViewDto;
+    }
+    return { likesCount, dislikesCount, myStatus } as LikesInfoViewDto;
   }
 
-  /**
-   * Формирует likesInfo/extendedLikesInfo для массива сущностей
-   */
-  async attachLikesInfo<T extends { _id: Types.ObjectId }>(
+  async attachLikesInfo<T extends { id: number }>(
     entities: T[],
     entity: LikeableEntity,
-    userId?: Types.ObjectId | null,
-  ): Promise<
-    (T & {
-      extendedLikesInfo?: any;
-      likesInfo?: any;
-    })[]
-  > {
+    userId?: number | null,
+  ): Promise<(T & { likesInfo?: any; extendedLikesInfo?: any })[]> {
     return Promise.all(
       entities.map(async e => {
-        const info = await this.buildLikesInfo(e._id, entity, userId);
-
-        // Комментарии — likesInfo, посты — extendedLikesInfo
-        const key = entity === LikeableEntity.Post ? 'extendedLikesInfo' : 'likesInfo';
-
-        return {
-          ...e,
-          [key]: info,
-        };
+        const info = await this.buildLikesInfo(e.id, entity, userId);
+        const key = entity === 'Post' ? 'extendedLikesInfo' : 'likesInfo';
+        return { ...e, [key]: info };
       }),
     );
   }
 
-  // === PRIVATE METHODS ===
-
   private async calculateMyStatus(
-    userId: Types.ObjectId | null | undefined,
-    entityId: Types.ObjectId,
+    userId: number | null | undefined,
+    entityId: number,
     entity: LikeableEntity,
   ): Promise<LikeStatus> {
-    if (!userId) return LikeStatus.None;
-
-    const like = await this.likesRepository.findByUserAndEntity(userId, entityId, entity);
+    if (!userId) {
+      return LikeStatus.None;
+    }
+    const like = await this.likesSqlQueryRepository.calculateMyStatus(userId, entityId, entity);
     return like?.status ?? LikeStatus.None;
   }
 
   private async calculateNewestLikes(
-    entityId: Types.ObjectId,
+    entityId: number,
     entity: LikeableEntity,
-  ): Promise<
-    {
-      addedAt: Date;
-      userId: string;
-      login: string;
-    }[]
-  > {
-    const newest = await this.likesRepository.newestLikes(entityId, entity);
+  ): Promise<LikeDetailsViewDto[]> {
+    const newest = await this.likesSqlRepository.newestLikes(entityId, entity);
     return newest.map(l => ({
-      addedAt: l.createdAt,
-      userId: l.userId.toString(),
-      login: l.userLogin,
+      addedAt: l.updated_at,
+      userId: l.user_id.toString(),
+      login: l.login,
     }));
+  }
+
+  async updateCounters(entityId: number, entity: LikeableEntity): Promise<void> {
+    const likesCount = await this.likesSqlRepository.countByStatus(
+      entityId,
+      entity,
+      LikeStatus.Like,
+    );
+    const dislikesCount = await this.likesSqlRepository.countByStatus(
+      entityId,
+      entity,
+      LikeStatus.Dislike,
+    );
+
+    if (entity === 'Post') {
+      await this.likesSqlRepository.applyPostLikeCounters(entityId, likesCount, dislikesCount);
+    } else {
+      await this.likesSqlRepository.applyCommentLikeCounters(entityId, likesCount, dislikesCount);
+    }
   }
 }

@@ -1,33 +1,31 @@
-import { Types } from 'mongoose';
-
-import { PostDocument } from '../../domain/posts.entity';
 import { ExtendedLikesInfoViewDto } from 'src/modules/likes/api/view-dto/like.view-dto';
-import { LikeStatus } from 'src/modules/likes/domain/like.entity';
+
+import { PostDataWithLikes } from '../../domain/posts.entity';
 
 export class PostViewDto {
   id: string;
   title: string;
   shortDescription: string;
   content: string;
-  blogId: Types.ObjectId;
+  blogId: string;
   blogName: string;
   createdAt: Date;
   extendedLikesInfo: ExtendedLikesInfoViewDto;
 
-  static mapToView(post: PostDocument): PostViewDto {
+  static mapFromSql(post: PostDataWithLikes): PostViewDto {
     const dto = new PostViewDto();
 
-    dto.id = post._id.toString() ?? post.id;
+    dto.id = post.id.toString();
     dto.title = post.title;
-    dto.shortDescription = post.shortDescription;
+    dto.shortDescription = post.short_description;
     dto.content = post.content;
-    dto.blogId = post.blogId;
-    dto.blogName = post.blogName;
-    dto.createdAt = post.createdAt;
+    dto.blogId = post.blog_id.toString();
+    dto.blogName = post.blog_name;
+    dto.createdAt = post.created_at;
     dto.extendedLikesInfo = {
       likesCount: post.extendedLikesInfo?.likesCount ?? 0,
       dislikesCount: post.extendedLikesInfo?.dislikesCount ?? 0,
-      myStatus: post.extendedLikesInfo?.myStatus ?? LikeStatus.None,
+      myStatus: post.extendedLikesInfo?.myStatus ?? 'None',
       newestLikes: post.extendedLikesInfo?.newestLikes ?? [],
     };
     return dto;

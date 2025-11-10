@@ -10,19 +10,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 import { ExtractUserFromRequest } from 'src/core/decorators/param/extract-user-from-request';
 import { LikeInputModel } from 'src/modules/likes/api/input-dto/like.input-dto';
 import { SetLikeStatusCommand } from 'src/modules/likes/application/set-like-status.usecase';
-import { LikeableEntity } from 'src/modules/likes/domain/like.entity';
 import { UserContextDto } from 'src/modules/user-accounts/dto/create-user.dto';
 import { JwtAuthGuard } from 'src/modules/user-accounts/guards/bearer/jwt-auth.guard';
+import { JwtOptionalAuthGuard } from 'src/modules/user-accounts/guards/bearer/jwt-optional-auth.guard';
 
 import { UpdateCommentInputDto } from './input-dto/comment.input-dto';
 import { GetCommentByIdQuery } from '../application/queries/get-comment-by-id.query';
 import { DeleteCommentCommand } from '../application/usecases/delete-comment.usecase';
 import { UpdateCommentCommand } from '../application/usecases/update-comment.usecase';
-import { JwtOptionalAuthGuard } from 'src/modules/user-accounts/guards/bearer/jwt-optional-auth.guard';
 
 @Controller('comments')
 export class CommentsController {
@@ -35,7 +33,7 @@ export class CommentsController {
 
   @Get(':id')
   @UseGuards(JwtOptionalAuthGuard)
-  async getById(@Param('id') id: Types.ObjectId, @ExtractUserFromRequest() user: UserContextDto) {
+  async getById(@Param('id') id: number, @ExtractUserFromRequest() user: UserContextDto) {
     return this.queryBus.execute(new GetCommentByIdQuery(id, user));
   }
 
@@ -43,7 +41,7 @@ export class CommentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   async updateComment(
-    @Param('id') id: Types.ObjectId,
+    @Param('id') id: number,
     @Body() dto: UpdateCommentInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ) {
@@ -53,10 +51,7 @@ export class CommentsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
-  async deleteComment(
-    @Param('id') id: Types.ObjectId,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ) {
+  async deleteComment(@Param('id') id: number, @ExtractUserFromRequest() user: UserContextDto) {
     return this.commandBus.execute(new DeleteCommentCommand(id, user));
   }
 
@@ -65,12 +60,12 @@ export class CommentsController {
   @UseGuards(JwtAuthGuard)
   async updateLikeStatusForComment(
     @Param('commentId')
-    commentId: Types.ObjectId,
+    commentId: number,
     @Body() body: LikeInputModel,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     await this.commandBus.execute(
-      new SetLikeStatusCommand(commentId, LikeableEntity.Comment, body.likeStatus, user),
+      new SetLikeStatusCommand(commentId, 'Comment', body.likeStatus, user),
     );
   }
 }

@@ -1,19 +1,17 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 
-import { PostsRepository } from '../../infrastructure/posts.repository';
+import { PostsSqlRepository } from '../../infrastructure/posts-sql.repository';
 
 export class DeletePostCommand {
-  constructor(public postId: Types.ObjectId) {}
+  constructor(public postId: number) {}
 }
 
 @CommandHandler(DeletePostCommand)
 export class DeletePostUseCase implements ICommandHandler<DeletePostCommand> {
-  constructor(private postsRepository: PostsRepository) {}
+  constructor(private postsSqlRepository: PostsSqlRepository) {}
   async execute({ postId }: DeletePostCommand): Promise<void> {
-    const post = await this.postsRepository.findOrNotFoundFail(postId);
-    await post.makeDeleted();
-    await this.postsRepository.save(post);
+    await this.postsSqlRepository.findOrNotFoundFail(postId);
+    await this.postsSqlRepository.delete(postId);
     return;
   }
 }

@@ -14,6 +14,10 @@ export class TestingController {
     console.log('testing all-data deleteAll');
 
     const tables = [
+      'Blogs',
+      'Posts',
+      'Likes',
+      'Comments',
       'RevokedTokens',
       'Sessions',
       'PasswordRecoveryCodes',

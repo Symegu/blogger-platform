@@ -1,9 +1,8 @@
-import { configModule } from './dynamic-config-module';
-
 import { DynamicModule, Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,11 +10,11 @@ import { CoreConfig } from './core/core.config';
 import { CoreModule } from './core/core.module';
 import { AllExceptionsFilter } from './core/exceptions/filters/all-exceptions.filter';
 import { DomainHttpExceptionsFilter } from './core/exceptions/filters/domain-exceptions.filter';
-//import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
+import { ThrottlerExceptionFilter } from './core/exceptions/filters/throttler-exceptions.filter';
+import { configModule } from './dynamic-config-module';
+import { BloggersPlatformModule } from './modules/bloggers-platform/bloggers-platform.module';
 import { TestingModule } from './modules/testing/testing.module';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerExceptionFilter } from './core/exceptions/filters/throttler-exceptions.filter';
 
 @Module({
   imports: [
@@ -47,7 +46,7 @@ import { ThrottlerExceptionFilter } from './core/exceptions/filters/throttler-ex
       inject: [CoreConfig],
     }),
     UserAccountsModule, //все модули должны быть заимпортированы в корневой модуль, либо напрямую, либо по цепочке (через другие модули)
-    //BloggersPlatformModule,
+    BloggersPlatformModule,
     configModule,
     ThrottlerModule.forRoot({
       throttlers: [

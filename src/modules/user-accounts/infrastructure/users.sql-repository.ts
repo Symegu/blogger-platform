@@ -21,7 +21,7 @@ export class UsersSqlRepository {
     return user[0];
   }
 
-  async findOrNotFoundFail(id: number): Promise<UserData[]> {
+  async findOrNotFoundFail(id: number): Promise<UserData> {
     const result = await this.dataSource.query(
       `SELECT u.id, u.login, u.password_hash, u.email, u.is_email_confirmed, u.created_at, u.updated_at, u.deleted_at
        FROM public."Users" u

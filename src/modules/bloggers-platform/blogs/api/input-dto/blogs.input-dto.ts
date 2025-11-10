@@ -30,6 +30,6 @@ export enum BlogsSortBy {
 
 //наследуемся от класса BaseQueryParams, где уже есть pageNumber, pageSize и т.п., чтобы не дублировать эти свойства
 export class GetBlogsQueryParams extends BaseQueryParams {
-  sortBy = BlogsSortBy.CreatedAt;
+  sortBy: BlogsSortBy = BlogsSortBy.CreatedAt;
   searchNameTerm: string | null = null;
 }

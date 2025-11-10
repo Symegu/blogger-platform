@@ -1,16 +1,14 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
-// import { PostsQueryRepository } from '../../infrastructure/query/posts.query-repository';
-import { LikeableEntity } from 'src/modules/likes/domain/like.entity';
+import { ExtendedLikesInfoViewDto } from 'src/modules/likes/api/view-dto/like.view-dto';
 import { UserContextDto } from 'src/modules/user-accounts/dto/create-user.dto';
 
 import { LikesService } from '../../../../likes/application/likes.service';
 import { PostViewDto } from '../../api/view-dto/posts.view-dto';
-import { PostsRepository } from '../../infrastructure/posts.repository';
+import { PostsSqlRepository } from '../../infrastructure/posts-sql.repository';
 
 export class GetPostByIdQuery {
   constructor(
-    public id: Types.ObjectId,
+    public id: number,
     public user: UserContextDto | null,
   ) {}
 }
@@ -18,19 +16,25 @@ export class GetPostByIdQuery {
 @QueryHandler(GetPostByIdQuery)
 export class GetPostByIdQueryHandler implements IQueryHandler<GetPostByIdQuery> {
   constructor(
-    private readonly postsRepository: PostsRepository,
+    private readonly postsSqlRepository: PostsSqlRepository,
     private likesService: LikesService,
   ) {}
-  async execute({ id, user }: GetPostByIdQuery) {
-    //return this.postsQueryRepository.getByIdOrNotFoundFail(query.id);
-    const post = await this.postsRepository.findOrNotFoundFail(id);
-    const extendedLikesInfo = await this.likesService.buildLikesInfo(
-      post._id,
-      LikeableEntity.Post,
+  async execute({ id, user }: GetPostByIdQuery): Promise<PostViewDto> {
+    const post = await this.postsSqlRepository.findOrNotFoundFail(id);
+    const extendedLikesInfo = (await this.likesService.buildLikesInfo(
+      post.id,
+      'Post',
       user?.id,
-    );
-    post.extendedLikesInfo = extendedLikesInfo;
+    )) as ExtendedLikesInfoViewDto;
 
-    return PostViewDto.mapToView(post);
+    return PostViewDto.mapFromSql({
+      ...post,
+      extendedLikesInfo: {
+        likesCount: extendedLikesInfo.likesCount,
+        dislikesCount: extendedLikesInfo.dislikesCount,
+        myStatus: extendedLikesInfo.myStatus,
+        newestLikes: extendedLikesInfo.newestLikes,
+      },
+    });
   }
 }

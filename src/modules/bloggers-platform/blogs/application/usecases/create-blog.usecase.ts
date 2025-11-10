@@ -1,8 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { CreateBlogInputDto } from '../../api/input-dto/blogs.input-dto';
-import { BlogViewDto } from '../../api/view-dto/blogs.view-dto';
-import { BlogsRepository } from '../../infrastructure/blogs.repository';
+import { BlogsSqlRepository } from '../../infrastructure/blogs-sql.repository';
 import { BlogsFactory } from '../factories/blogs.factory';
 
 export class CreateBlogCommand {
@@ -10,15 +9,14 @@ export class CreateBlogCommand {
 }
 
 @CommandHandler(CreateBlogCommand)
-export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand, BlogViewDto> {
+export class CreateBlogUseCase implements ICommandHandler<CreateBlogCommand, number> {
   constructor(
-    private readonly blogsRepository: BlogsRepository,
+    private readonly blogsSqlRepository: BlogsSqlRepository,
     private blogsFactory: BlogsFactory,
   ) {}
 
-  async execute({ dto }: CreateBlogCommand): Promise<BlogViewDto> {
+  async execute({ dto }: CreateBlogCommand): Promise<number> {
     const blog = await this.blogsFactory.create(dto);
-    await this.blogsRepository.save(blog);
-    return BlogViewDto.mapToView(blog);
+    return await this.blogsSqlRepository.create(blog);
   }
 }

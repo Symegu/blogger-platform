@@ -1,34 +1,32 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 import { BlogViewDto } from 'src/modules/bloggers-platform/blogs/api/view-dto/blogs.view-dto';
-import { BlogsQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/query/blogs.query.repository';
+import { BlogsSqlQueryRepository } from 'src/modules/bloggers-platform/blogs/infrastructure/query/blogs-sql.query-repository';
 
 import { UpdatePostInputDto } from '../../api/input-dto/posts.input-dto';
-import { PostsRepository } from '../../infrastructure/posts.repository';
+import { PostsSqlRepository } from '../../infrastructure/posts-sql.repository';
 
 export class UpdatePostCommand {
   constructor(
     public dto: UpdatePostInputDto,
-    public blogId: Types.ObjectId,
-    public postId: Types.ObjectId,
+    public blogId: number,
+    public postId: number,
   ) {}
 }
 
 @CommandHandler(UpdatePostCommand)
 export class UpdatePostUseCase implements ICommandHandler<UpdatePostCommand, void> {
   constructor(
-    private postsRepository: PostsRepository,
-    private blogsQueryRepository: BlogsQueryRepository,
+    private postsSqlRepository: PostsSqlRepository,
+    private blogsSqlQueryRepository: BlogsSqlQueryRepository,
   ) {}
   async execute({ dto, blogId, postId }: UpdatePostCommand): Promise<void> {
     await this.ensureBlogExists(blogId);
-    const post = await this.postsRepository.findOrNotFoundFail(postId);
-    post.update(dto);
-    await this.postsRepository.save(post);
+    await this.postsSqlRepository.findOrNotFoundFail(postId);
+    await this.postsSqlRepository.update(postId, { ...dto, blogId });
     return;
   }
 
-  private async ensureBlogExists(blogId: Types.ObjectId): Promise<BlogViewDto> {
-    return await this.blogsQueryRepository.getByIdOrNotFoundFail(blogId);
+  private async ensureBlogExists(blogId: number): Promise<BlogViewDto> {
+    return await this.blogsSqlQueryRepository.getByIdOrNotFoundFail(blogId);
   }
 }

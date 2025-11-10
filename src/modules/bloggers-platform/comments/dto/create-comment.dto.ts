@@ -1,8 +1,12 @@
-import { Types } from 'mongoose';
-
-export class CreateCommentDomainDto {
+export class CreateCommentData {
   content: string;
-  postId: Types.ObjectId;
-  userId: Types.ObjectId;
-  userLogin: string;
+  post_id: number;
+  user_id: number;
+  user_login: string;
+}
+
+export class UpdateCommentData {
+  content: string;
+  id: number;
+  user_id: number;
 }

@@ -1,5 +1,4 @@
 import { IsNotEmpty, IsString, Length } from 'class-validator';
-import { Types } from 'mongoose';
 import { BaseQueryParams } from 'src/core/dto/base.query-params.input-dto';
 
 export class CreateCommentInputDto {
@@ -21,5 +20,5 @@ export enum CommentsSortBy {
 }
 export class GetCommentsQueryParams extends BaseQueryParams {
   sortBy: CommentsSortBy = CommentsSortBy.CreatedAt;
-  postId: Types.ObjectId;
+  postId: number;
 }

@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { GetBlogsQueryParams } from '../../api/input-dto/blogs.input-dto';
-import { BlogsQueryRepository } from '../../infrastructure/query/blogs.query.repository';
+import { BlogsSqlQueryRepository } from '../../infrastructure/query/blogs-sql.query-repository';
 
 export class GetAllBlogsQuery {
   constructor(public queryParams: GetBlogsQueryParams) {}
@@ -9,9 +9,11 @@ export class GetAllBlogsQuery {
 
 @QueryHandler(GetAllBlogsQuery)
 export class GetAllBlogsQueryHandler implements IQueryHandler<GetAllBlogsQuery> {
-  constructor(private readonly blogsQueryRepository: BlogsQueryRepository) {}
+  constructor(private readonly blogsSqlQueryRepository: BlogsSqlQueryRepository) {}
 
-  async execute(query: GetAllBlogsQuery) {
-    return this.blogsQueryRepository.getAll(query.queryParams);
+  async execute({ queryParams }: GetAllBlogsQuery) {
+    console.log('GetAllBlogsQueryHandler', queryParams);
+
+    return this.blogsSqlQueryRepository.getAll(queryParams);
   }
 }

@@ -1,23 +1,21 @@
-import { Types } from 'mongoose';
-
-export class CreatePostDomainDto {
+export class CreatePostData {
   title: string;
-  shortDescription: string;
+  short_description: string;
   content: string;
-  blogId: Types.ObjectId;
-  blogName: string;
+  blog_id: number;
+  blog_name: string;
 }
 
 export class CreatePostDto {
   title: string;
   shortDescription: string;
   content: string;
-  blogId: Types.ObjectId;
+  blogId: number;
 }
 
-export class UpdatePostDto {
+export class UpdatePostData {
   title: string;
   shortDescription: string;
   content: string;
-  blogId: Types.ObjectId;
+  blogId: number;
 }

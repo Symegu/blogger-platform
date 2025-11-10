@@ -61,3 +61,10 @@ export class UpdateBlogInputDto {
   @MaxLength(100)
   websiteUrl: string;
 }
+
+export interface CreateBlogData {
+  name: string;
+  description: string;
+  website_url: string;
+  is_membership: boolean;
+}

@@ -1,6 +1,5 @@
 //dto для боди при создании юзера. Сюда могут быть добавлены декораторы swagger
-import { IsString, IsNotEmpty, MaxLength, IsMongoId } from 'class-validator';
-import { Types } from 'mongoose';
+import { IsString, IsNotEmpty, MaxLength, IsNumber } from 'class-validator';
 import { Trim } from 'src/core/decorators/transform/trim';
 
 import { BaseQueryParams } from '../../../../../core/dto/base.query-params.input-dto';
@@ -21,9 +20,9 @@ export class CreatePostInputDto {
   @IsNotEmpty()
   @MaxLength(1000)
   content: string;
-  @IsMongoId()
+  @IsNumber()
   @IsNotEmpty()
-  blogId: Types.ObjectId;
+  blogId: number;
 }
 
 export class CreatePostForBlogInputDto {
@@ -60,19 +59,18 @@ export class UpdatePostInputDto {
   @IsNotEmpty()
   @MaxLength(1000)
   content: string;
-  @IsMongoId()
-  @IsNotEmpty()
-  blogId: Types.ObjectId;
+  blogId?: number;
 }
 
 export enum PostsSortBy {
-  CreatedAt = 'createdAt',
+  CreatedAt = 'created_at',
   Title = 'title',
-  BlogId = 'blogId',
+  BlogId = 'blog_id',
+  BlogName = 'blog_name',
 }
 
 //наследуемся от класса BaseQueryParams, где уже есть pageNumber, pageSize и т.п., чтобы не дублировать эти свойства
 export class GetPostsQueryParams extends BaseQueryParams {
   sortBy: PostsSortBy = PostsSortBy.CreatedAt;
-  blogId?: Types.ObjectId;
+  blogId?: number;
 }

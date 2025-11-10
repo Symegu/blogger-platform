@@ -1,11 +1,9 @@
-import { Types } from 'mongoose';
-
 import { LikeableEntity, LikeStatus } from '../domain/like.entity';
 
-export type CreateLikeDomainDto = {
-  userId: Types.ObjectId;
-  userLogin: string;
+export type CreateLikeData = {
+  user_id: number;
+  user_login: string;
   entity: LikeableEntity;
-  entityId: Types.ObjectId;
+  entity_id: number;
   status: LikeStatus;
 };

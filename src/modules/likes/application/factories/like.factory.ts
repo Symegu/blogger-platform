@@ -1,55 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Types } from 'mongoose';
 
-import {
-  Like,
-  LikeDocument,
-  LikeModelType,
-  LikeStatus,
-  LikeableEntity,
-} from '../../domain/like.entity';
-import { CreateLikeDomainDto } from '../../dto/like.domain-dto';
+import { LikeStatus } from '../../domain/like.entity';
+import { CreateLikeData } from '../../dto/like.domain-dto';
 
 @Injectable()
 export class LikesFactory {
-  constructor(
-    @InjectModel(Like.name)
-    private LikeModel: LikeModelType,
-  ) {}
-
-  async create(dto: CreateLikeDomainDto): Promise<LikeDocument> {
-    const like = this.LikeModel.createInstance(dto);
-    return like;
-  }
-
-  async createForPost(
-    userId: Types.ObjectId,
+  create(
+    userId: number,
     userLogin: string,
-    postId: Types.ObjectId,
+    entity: 'Post' | 'Comment',
+    entityId: number,
     status: LikeStatus,
-  ): Promise<LikeDocument> {
-    return this.create({
-      userId,
-      userLogin,
-      entity: LikeableEntity.Post,
-      entityId: postId,
+  ): CreateLikeData {
+    return {
+      user_id: userId,
+      user_login: userLogin,
+      entity,
+      entity_id: entityId,
       status,
-    });
-  }
-
-  async createForComment(
-    userId: Types.ObjectId,
-    userLogin: string,
-    commentId: Types.ObjectId,
-    status: LikeStatus,
-  ): Promise<LikeDocument> {
-    return this.create({
-      userId,
-      userLogin,
-      entity: LikeableEntity.Comment,
-      entityId: commentId,
-      status,
-    });
+    };
   }
 }

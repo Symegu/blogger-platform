@@ -1,23 +1,26 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Types } from 'mongoose';
 
 import { UpdateBlogInputDto } from '../../dto/create-blog.dto';
-import { BlogsRepository } from '../../infrastructure/blogs.repository';
+import { BlogsSqlRepository } from '../../infrastructure/blogs-sql.repository';
 
 export class UpdateBlogCommand {
   constructor(
     public dto: UpdateBlogInputDto,
-    public blogId: Types.ObjectId,
+    public blogId: number,
   ) {}
 }
 
 @CommandHandler(UpdateBlogCommand)
 export class UpdateBlogUseCase implements ICommandHandler<UpdateBlogCommand, void> {
-  constructor(private readonly blogsRepository: BlogsRepository) {}
+  constructor(private readonly blogsSqlRepository: BlogsSqlRepository) {}
   async execute({ dto, blogId }: UpdateBlogCommand): Promise<void> {
-    const blog = await this.blogsRepository.findOrNotFoundFail(blogId);
-
-    blog.update(dto);
-    await this.blogsRepository.save(blog);
+    await this.blogsSqlRepository.findOrNotFoundFail(blogId);
+    await this.blogsSqlRepository.update(blogId, {
+      name: dto.name,
+      website_url: dto.websiteUrl,
+      description: dto.description,
+      is_membership: false,
+    });
+    return;
   }
 }
