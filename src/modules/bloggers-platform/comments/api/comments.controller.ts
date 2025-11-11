@@ -64,7 +64,8 @@ export class CommentsController {
     @Body() body: LikeInputModel,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
-    await this.commandBus.execute(
+    await this.queryBus.execute(new GetCommentByIdQuery(commentId, user));
+    return await this.commandBus.execute(
       new SetLikeStatusCommand(commentId, 'Comment', body.likeStatus, user),
     );
   }
